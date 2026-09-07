@@ -59,7 +59,29 @@ export type CompanyProfile = {
   nextInvoiceNumber: number;
   /** Zero-pad the number to this width (`3` → `001`). `0` = no padding. */
   numberPadding: number;
+
+  // ---- Payable To & banking details (Phase E) ----
+  // An optional footer printed at the very bottom of every invoice (after the
+  // signature block and Notes). It always shows once filled in — there is no
+  // per-invoice toggle. Leaving every field blank renders nothing at all, so
+  // the invoice looks exactly as it did before this feature. See
+  // `hasBankingDetails` / `bankingFieldRows` for the render gate + field order.
+  /** Who a payment should be made out to (may differ from the account title). */
+  payableTo: string;
+  bankName: string;
+  /** Account holder name as it appears at the bank. */
+  accountTitle: string;
+  accountNumber: string;
+  iban: string;
+  /** Freeform line under the banking box, e.g. "Share receipt after payment". */
+  bankingNote: string;
 };
+
+/** Just the Payable To / banking fields, pulled off a full profile. */
+export type BankingDetails = Pick<
+  CompanyProfile,
+  "payableTo" | "bankName" | "accountTitle" | "accountNumber" | "iban" | "bankingNote"
+>;
 
 export const COMPANY_PROFILE_KEY = "rapidai-company-profile";
 
@@ -79,6 +101,12 @@ export const emptyCompanyProfile: CompanyProfile = {
   invoicePrefix: "",
   nextInvoiceNumber: 1,
   numberPadding: 0,
+  payableTo: "",
+  bankName: "",
+  accountTitle: "",
+  accountNumber: "",
+  iban: "",
+  bankingNote: "",
 };
 
 /** Pulls just the formatting preferences out of a profile. */
@@ -93,6 +121,42 @@ export function formatPrefsOf(p: CompanyProfile): FormatPrefs {
 /** True when auto-numbering is switched on (a prefix has been set). */
 export function hasInvoiceNumbering(p: CompanyProfile): boolean {
   return p.invoicePrefix.trim() !== "";
+}
+
+/** Pulls just the Payable To / banking fields out of a profile. */
+export function bankingDetailsOf(p: CompanyProfile): BankingDetails {
+  return {
+    payableTo: p.payableTo,
+    bankName: p.bankName,
+    accountTitle: p.accountTitle,
+    accountNumber: p.accountNumber,
+    iban: p.iban,
+    bankingNote: p.bankingNote,
+  };
+}
+
+/**
+ * The "Banking details" box rows, in display order, with blank fields dropped.
+ * Shared by the on-screen document and the PDF so both show the same labels in
+ * the same order. `payableTo` and `bankingNote` are rendered separately.
+ */
+export function bankingFieldRows(b: BankingDetails): Array<{ label: string; value: string }> {
+  return [
+    { label: "Bank name", value: b.bankName },
+    { label: "Account title", value: b.accountTitle },
+    { label: "Account number", value: b.accountNumber },
+    { label: "IBAN", value: b.iban },
+  ]
+    .map((r) => ({ label: r.label, value: r.value.trim() }))
+    .filter((r) => r.value !== "");
+}
+
+/**
+ * True when at least one Payable To / banking field is filled in. When this is
+ * false the footer section renders nothing and the invoice is unchanged.
+ */
+export function hasBankingDetails(b: BankingDetails): boolean {
+  return Boolean(b.payableTo.trim() || b.bankingNote.trim() || bankingFieldRows(b).length > 0);
 }
 
 /** Coerces a stored value into a safe positive integer, `fallback` otherwise. */

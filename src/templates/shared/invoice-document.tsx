@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from "react";
 import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { bankingFieldRows, hasBankingDetails } from "@/lib/company-profile";
 import type { InvoiceTemplateProps, UiTheme } from "../types";
 
 // Shared affordance class defined in styles.css (@layer components).
@@ -29,10 +30,14 @@ export function InvoiceDocument({
   onEditProfile,
   formatMoney: money,
   signatureUrl,
+  banking,
   theme: t,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const { subtotal, tax, total, balance } = totals;
+  const bankRows = bankingFieldRows(banking);
+  const showBanking = hasBankingDetails(banking);
+  const showBankBox = bankRows.length > 0 || banking.bankingNote.trim() !== "";
 
   return (
     <article id="invoice-sheet" className={t.sheet}>
@@ -307,6 +312,35 @@ export function InvoiceDocument({
               <p className={cn("mt-0.5", t.label)}>Signature</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {showBanking && (
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 print:mt-12">
+          {banking.payableTo.trim() && (
+            <div className="rounded-sm border border-border p-4">
+              <p className={cn("mb-1.5", t.label)}>Payable to</p>
+              <p className={cn("text-sm font-semibold text-foreground", t.headingFont)}>
+                {banking.payableTo}
+              </p>
+            </div>
+          )}
+          {showBankBox && (
+            <div className="rounded-sm border border-border p-4">
+              <p className={cn("mb-1.5", t.label)}>Banking details</p>
+              <dl className="space-y-1 text-sm">
+                {bankRows.map((row) => (
+                  <div key={row.label} className="flex flex-wrap gap-x-1.5">
+                    <dt className="text-muted-foreground">{row.label}:</dt>
+                    <dd className="break-words font-medium text-foreground">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {banking.bankingNote.trim() && (
+                <p className="mt-2 text-xs text-muted-foreground">{banking.bankingNote}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </article>

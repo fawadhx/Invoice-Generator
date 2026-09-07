@@ -1,4 +1,5 @@
 import autoTable from "jspdf-autotable";
+import { bankingFieldRows, hasBankingDetails } from "@/lib/company-profile";
 import type { InvoicePdfContext, PdfTheme } from "../types";
 
 /**
@@ -22,6 +23,7 @@ export async function renderInvoicePdf(
     money,
     date,
     signatureUrl,
+    banking,
     imageAsPng,
   }: InvoicePdfContext,
   theme: PdfTheme,
@@ -282,5 +284,92 @@ export async function renderInvoicePdf(
     doc.setTextColor(50);
     const lines = doc.splitTextToSize(inv.notes.trim(), pageWidth - MARGIN * 2);
     doc.text(lines, MARGIN, ny + 14);
+    y = ny + 14 + lines.length * 11;
+  }
+
+  // ---- Payable To & banking details ----
+  // A two-box footer at the very bottom of the invoice, mirroring the on-screen
+  // block. Only drawn when a field is filled; only filled fields render within
+  // each box; if the block would spill past the bottom margin it moves to a
+  // fresh page rather than being clipped (same as the signature block).
+  if (hasBankingDetails(banking)) {
+    const colGap = 20;
+    const boxW = (pageWidth - MARGIN * 2 - colGap) / 2;
+    const pad = 12;
+    const lineH = 12;
+
+    const bankRows = bankingFieldRows(banking);
+    const showBankBox = bankRows.length > 0 || banking.bankingNote.trim() !== "";
+    const showPayableBox = banking.payableTo.trim() !== "";
+
+    // Pre-measure each box (with the font each run is drawn in, so wrapping is
+    // accurate) so both can share one border height and the whole block can be
+    // page-break tested before anything is drawn.
+    doc.setFont(heading, "bold");
+    doc.setFontSize(10);
+    const payableLines: string[] = showPayableBox
+      ? doc.splitTextToSize(banking.payableTo.trim(), boxW - pad * 2)
+      : [];
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const bankBodyLines: string[] = [];
+    for (const row of bankRows) {
+      bankBodyLines.push(...doc.splitTextToSize(`${row.label}: ${row.value}`, boxW - pad * 2));
+    }
+    const noteLines: string[] = banking.bankingNote.trim()
+      ? doc.splitTextToSize(banking.bankingNote.trim(), boxW - pad * 2)
+      : [];
+
+    // heading + gap + body (+ gap + note)
+    const payableH = showPayableBox ? pad + 12 + 6 + payableLines.length * lineH + pad : 0;
+    const bankH = showBankBox
+      ? pad +
+        12 +
+        6 +
+        bankBodyLines.length * lineH +
+        (noteLines.length ? 8 + noteLines.length * lineH : 0) +
+        pad
+      : 0;
+    const boxH = Math.max(payableH, bankH);
+
+    let by = y + 26;
+    if (by + boxH > pageHeight - MARGIN) {
+      doc.addPage();
+      by = MARGIN;
+    }
+
+    const drawBox = (x: number, label: string, render: (innerY: number) => void) => {
+      doc.setDrawColor(210);
+      doc.setLineWidth(0.75);
+      doc.rect(x, by, boxW, boxH, "S");
+      doc.setFont(heading, "bold");
+      doc.setFontSize(8);
+      setLabelColor();
+      doc.text(label, x + pad, by + pad + 8);
+      render(by + pad + 8 + 6 + lineH);
+    };
+
+    if (showPayableBox) {
+      drawBox(MARGIN, "PAYABLE TO", (innerY) => {
+        doc.setFont(heading, "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(30);
+        doc.text(payableLines, MARGIN + pad, innerY);
+      });
+    }
+
+    if (showBankBox) {
+      const x = showPayableBox ? MARGIN + boxW + colGap : MARGIN;
+      drawBox(x, "BANKING DETAILS", (innerY) => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(50);
+        doc.text(bankBodyLines, x + pad, innerY);
+        if (noteLines.length) {
+          doc.setTextColor(120);
+          doc.text(noteLines, x + pad, innerY + bankBodyLines.length * lineH + 8);
+        }
+      });
+    }
   }
 }

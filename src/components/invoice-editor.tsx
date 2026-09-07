@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { computeTotals, type Invoice, type InvoiceItem as Item } from "@/lib/invoice";
 import {
   applyCompanyProfile,
+  bankingDetailsOf,
   emptyCompanyProfile,
   formatPrefsOf,
   generateNextInvoiceNumber,
@@ -124,6 +125,9 @@ export function InvoiceEditor() {
   const prefs = useMemo(() => formatPrefsOf(profile), [profile]);
   const fmtMoney = useMemo(() => (v: number) => formatMoney(v, prefs), [prefs]);
   const fmtDate = useMemo(() => (iso: string) => formatDate(iso, prefs.dateFormat), [prefs]);
+  // Payable To / banking footer — profile-owned, like the signature and the
+  // currency formatters. Shown on the document (and PDF) only when filled in.
+  const banking = useMemo(() => bankingDetailsOf(profile), [profile]);
 
   // ---- Visual layer: the swappable template ----
   // `selectedTemplate` decides which layout renders the invoice on screen and
@@ -167,7 +171,7 @@ export function InvoiceEditor() {
     setDownloading(true);
     try {
       const { generateInvoicePdf } = await import("@/lib/invoice-pdf");
-      await generateInvoicePdf(inv, totals, prefs, profile.signatureUrl);
+      await generateInvoicePdf(inv, totals, prefs, profile.signatureUrl, banking);
     } catch (err) {
       console.error("Invoice PDF generation failed", err);
       setDownloadError("Could not generate the PDF. Please try again.");
@@ -212,6 +216,7 @@ export function InvoiceEditor() {
           formatMoney={fmtMoney}
           formatDate={fmtDate}
           signatureUrl={profile.signatureUrl}
+          banking={banking}
         />
 
         <aside className="w-full shrink-0 space-y-4 lg:sticky lg:top-6 lg:w-60 lg:self-start print:hidden">

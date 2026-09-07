@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { jsPDF } from "jspdf";
 import type { Invoice, InvoiceItem, InvoiceTotals } from "@/lib/invoice";
+import type { BankingDetails } from "@/lib/company-profile";
 
 /**
  * Props every template layout receives.
@@ -47,6 +48,15 @@ export type InvoiceTemplateProps = {
    */
   signatureUrl: string;
   /**
+   * The saved Company Profile's Payable To / banking fields. Rendered as a
+   * two-box footer at the very bottom of the document (after the signature
+   * block and Notes) whenever any field is non-empty; when every field is
+   * blank nothing is drawn and the invoice looks exactly as before. Only the
+   * filled fields within each box are shown. Profile-owned; never editable
+   * inline.
+   */
+  banking: BankingDetails;
+  /**
    * Opens the Company Details overlay (a shortcut to fill business name,
    * logo, address, email, phone and signature at once). The inline business
    * name / logo fields stay fully usable on their own.
@@ -82,6 +92,14 @@ export type InvoicePdfContext = {
    * "Signature" caption) only when non-empty.
    */
   signatureUrl: string;
+  /**
+   * The saved Company Profile's Payable To / banking fields. Drawn as a
+   * two-box footer at the very bottom of the invoice (after the signature
+   * block and Notes) whenever any field is non-empty, and moved to a fresh
+   * page rather than clipped if it would overflow. Nothing is drawn when
+   * every field is blank.
+   */
+  banking: BankingDetails;
   /**
    * Decodes any uploaded image (logo or signature) to a PNG data URL jsPDF
    * can embed, regardless of the original format. `null` if it cannot be

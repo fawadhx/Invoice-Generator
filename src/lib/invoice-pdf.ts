@@ -2,6 +2,16 @@ import { jsPDF } from "jspdf";
 import { getInvoiceTemplate } from "@/templates";
 import type { Invoice, InvoiceTotals } from "./invoice";
 import { DEFAULT_FORMAT_PREFS, formatDate, formatMoney, type FormatPrefs } from "./locale-format";
+import type { BankingDetails } from "./company-profile";
+
+const EMPTY_BANKING: BankingDetails = {
+  payableTo: "",
+  bankName: "",
+  accountTitle: "",
+  accountNumber: "",
+  iban: "",
+  bankingNote: "",
+};
 
 const MARGIN = 40;
 
@@ -66,12 +76,17 @@ async function imageAsPng(
  * `signatureUrl` is the saved Company Profile's signature (a data URL), or
  * `""` for none — passed straight through so every template's renderer can
  * draw the signature block in the same place it appears on screen.
+ *
+ * `banking` is the saved Company Profile's Payable To / banking fields, drawn
+ * as a footer at the very bottom of the invoice; an all-blank value (the
+ * default) renders nothing.
  */
 export async function generateInvoicePdf(
   inv: Invoice,
   totals: InvoiceTotals,
   prefs: FormatPrefs = DEFAULT_FORMAT_PREFS,
   signatureUrl = "",
+  banking: BankingDetails = EMPTY_BANKING,
 ): Promise<void> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const template = getInvoiceTemplate(inv.selectedTemplate);
@@ -87,6 +102,7 @@ export async function generateInvoicePdf(
     money: (value: number) => formatMoney(value, prefs),
     date: (iso: string) => formatDate(iso, prefs.dateFormat),
     signatureUrl,
+    banking,
     imageAsPng,
   });
 

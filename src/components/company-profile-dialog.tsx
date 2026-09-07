@@ -576,6 +576,77 @@ export function CompanyProfileDialog({ open, onOpenChange, profile, onSave }: Pr
               </div>
             )}
           </div>
+
+          {/* Payable To & banking details */}
+          <div className="space-y-3 rounded-sm border border-border bg-muted/30 p-3">
+            <div>
+              <Label className="text-sm font-semibold">Payable to &amp; banking details</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Optional. Once filled in, this prints as a footer on every invoice (and the PDF).
+                Leave it all blank to hide it.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cp-payable-to">Payable to</Label>
+              <Input
+                id="cp-payable-to"
+                value={draft.payableTo}
+                onChange={(e) => setDraft((d) => ({ ...d, payableTo: e.target.value }))}
+                placeholder="Who the payment is made out to"
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="cp-bank-name">Bank name</Label>
+                <Input
+                  id="cp-bank-name"
+                  value={draft.bankName}
+                  onChange={(e) => setDraft((d) => ({ ...d, bankName: e.target.value }))}
+                  placeholder="e.g. Meezan Bank"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cp-account-title">Account title</Label>
+                <Input
+                  id="cp-account-title"
+                  value={draft.accountTitle}
+                  onChange={(e) => setDraft((d) => ({ ...d, accountTitle: e.target.value }))}
+                  placeholder="Account holder name"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cp-account-number">Account number</Label>
+                <Input
+                  id="cp-account-number"
+                  value={draft.accountNumber}
+                  onChange={(e) => setDraft((d) => ({ ...d, accountNumber: e.target.value }))}
+                  placeholder="Account number"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cp-iban">IBAN</Label>
+                <Input
+                  id="cp-iban"
+                  value={draft.iban}
+                  onChange={(e) => setDraft((d) => ({ ...d, iban: e.target.value }))}
+                  placeholder="IBAN"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cp-banking-note">Note</Label>
+              <Textarea
+                id="cp-banking-note"
+                value={draft.bankingNote}
+                onChange={(e) => setDraft((d) => ({ ...d, bankingNote: e.target.value }))}
+                placeholder="e.g. Share receipt after payment"
+                rows={2}
+              />
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
