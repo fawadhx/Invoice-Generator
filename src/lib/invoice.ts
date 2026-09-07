@@ -4,7 +4,9 @@ export type Invoice = {
   logo?: string;
   business: string;
   from: string;
+  fromPhone: string;
   to: string;
+  toPhone: string;
   shipTo: string;
   invoiceNo: string;
   date: string;
@@ -16,6 +18,12 @@ export type Invoice = {
   amountPaid: number;
   notes: string;
   currency: string;
+  /**
+   * Id of the visual template used to render the invoice on screen and in the
+   * exported PDF (see `src/templates`). The invoice data is template-agnostic;
+   * this is the only field that decides how it looks.
+   */
+  selectedTemplate: string;
 };
 
 export type InvoiceTotals = {

@@ -183,6 +183,70 @@
   }
 }
 
+@layer components {
+  /*
+   * Shared affordance for every editable field on the invoice document
+   * (text/number/date inputs and textareas). At rest it shows a faint
+   * border and an "input well" fill that sits just off the document
+   * surface so first-time users can see what is clickable. Hover warms
+   * the border toward the accent; focus commits to the accent border
+   * plus a soft ring. Print/PDF output strips all of it back to plain
+   * text via the @media print block below.
+   */
+  .editable-field {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background-color: color-mix(in oklab, var(--color-muted) 55%, var(--color-card));
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--color-foreground);
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .editable-field::placeholder {
+    color: var(--color-muted-foreground);
+    font-style: italic;
+    opacity: 0.75;
+  }
+
+  .editable-field:hover {
+    border-color: color-mix(in oklab, var(--color-primary) 45%, var(--color-border));
+    background-color: var(--color-muted);
+  }
+
+  .editable-field:focus,
+  .editable-field:focus-visible {
+    border-color: var(--color-primary);
+    background-color: var(--color-card);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 28%, transparent);
+  }
+
+  /*
+   * Read-only variant — used for the calculated Balance due. Keeps the
+   * same border/radius/typography as an editable field so it reads as
+   * part of the same document system, but with a flatter fill, no hover
+   * warm-up and no focus ring so it does not invite editing.
+   */
+  .editable-field:read-only {
+    cursor: default;
+    background-color: color-mix(in oklab, var(--color-muted) 35%, var(--color-card));
+  }
+
+  .editable-field:read-only:hover,
+  .editable-field:read-only:focus,
+  .editable-field:read-only:focus-visible {
+    border-color: var(--color-border);
+    background-color: color-mix(in oklab, var(--color-muted) 35%, var(--color-card));
+    box-shadow: none;
+  }
+}
+
 @media print {
   :root,
   .dark {
@@ -192,6 +256,14 @@
     --card-foreground: oklch(0.19 0.018 255);
     --muted-foreground: oklch(0.42 0.02 255);
     --border: oklch(0.85 0.008 255);
+  }
+
+  .editable-field {
+    border-color: transparent;
+    background-color: transparent;
+    box-shadow: none;
+    padding-left: 0;
+    padding-right: 0;
   }
 
   body * {
