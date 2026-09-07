@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { InvoiceEditor } from "@/components/invoice-editor";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { SITE_URL } from "./__root";
 
 const FAQ = [
@@ -169,6 +170,13 @@ const jsonLd = {
       name: "Free Invoice Generator",
       url: `${SITE_URL}/`,
       logo: `${SITE_URL}/web-app-manifest-512x512.png`,
+      email: "support@freeinvoicemaking.com",
+      contactPoint: {
+        "@type": "ContactPoint",
+        email: "support@freeinvoicemaking.com",
+        contactType: "customer support",
+        availableLanguage: ["English"],
+      },
     },
     {
       "@type": "WebSite",
@@ -277,21 +285,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card print:hidden">
-        <div className="mx-auto flex max-w-5xl items-center gap-2.5 px-4 py-4 lg:px-6">
-          <img
-            src="/logo.png"
-            alt="Free Invoice Generator logo"
-            width={28}
-            height={28}
-            className="h-7 w-7 rounded-md object-contain"
-          />
-          <span className="text-sm font-semibold">Free Invoice Generator</span>
-          <div className="ml-auto">
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
       <section className="border-b border-border bg-card print:hidden">
@@ -447,15 +441,7 @@ function Index() {
       </section>
       </main>
 
-      <footer className="border-t border-border bg-card print:hidden">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-1 px-4 py-8 text-center text-xs text-muted-foreground lg:px-6">
-          <p>
-            Free Invoice Generator — a free online invoice maker for freelancers and small
-            businesses.
-          </p>
-          <p>No signup. No watermark. Your data stays in your browser.</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

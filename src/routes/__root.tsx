@@ -140,16 +140,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Free Invoice Generator — create and download invoices online",
       },
 
+      // twitter:title / twitter:description are intentionally omitted so X/Twitter
+      // falls back to the per-page og:title / og:description on every route.
       { name: "twitter:card", content: "summary_large_image" },
-      {
-        name: "twitter:title",
-        content: "Free Invoice Generator – Make & Download Invoices Online",
-      },
-      {
-        name: "twitter:description",
-        content:
-          "Create a professional invoice and download the PDF in under 60 seconds. Free invoice maker — no signup.",
-      },
       { name: "twitter:image", content: OG_IMAGE },
       {
         name: "twitter:image:alt",
@@ -161,9 +154,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "canonical", href: `${SITE_URL}/` },
-      { rel: "alternate", hreflang: "en", href: `${SITE_URL}/` },
-      { rel: "alternate", hreflang: "x-default", href: `${SITE_URL}/` },
       { rel: "icon", type: "image/png", href: "/favicon-96x96.png", sizes: "96x96" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "shortcut icon", href: "/favicon.ico" },
