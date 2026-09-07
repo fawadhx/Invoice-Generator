@@ -16,6 +16,7 @@ import {
 } from "@/lib/company-profile";
 import { formatDate, formatMoney } from "@/lib/locale-format";
 import { CompanyProfileDialog } from "@/components/company-profile-dialog";
+import { CurrencySettingsDialog } from "@/components/currency-settings-dialog";
 import { DEFAULT_TEMPLATE_ID, getInvoiceTemplate, invoiceTemplateList } from "@/templates";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -52,6 +53,9 @@ export function InvoiceEditor() {
   // is never touched by "Clear invoice", and only the overlay writes it.
   const [profile, setProfile] = useState<CompanyProfile>(emptyCompanyProfile);
   const [profileOpen, setProfileOpen] = useState(false);
+  // The top summary bar's "Change" link opens this focused dialog — just the
+  // currency / date / number formatting, writing back to the same profile.
+  const [currencyOpen, setCurrencyOpen] = useState(false);
 
   useEffect(() => {
     // Start from the last saved invoice (if any)…
@@ -189,7 +193,7 @@ export function InvoiceEditor() {
           </span>
           <button
             type="button"
-            onClick={() => setProfileOpen(true)}
+            onClick={() => setCurrencyOpen(true)}
             className="font-medium text-primary hover:underline"
           >
             Change
@@ -270,6 +274,13 @@ export function InvoiceEditor() {
       <CompanyProfileDialog
         open={profileOpen}
         onOpenChange={setProfileOpen}
+        profile={profile}
+        onSave={handleProfileSave}
+      />
+
+      <CurrencySettingsDialog
+        open={currencyOpen}
+        onOpenChange={setCurrencyOpen}
         profile={profile}
         onSave={handleProfileSave}
       />

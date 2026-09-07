@@ -73,25 +73,55 @@ export function InvoiceDocument({
               className="mb-4 hidden h-20 object-contain object-left print:block"
             />
           )}
-          <input
-            className={cn(cell, "text-lg font-semibold", t.headingFont)}
-            placeholder="Your business name"
-            value={inv.business}
-            onChange={(e) => patch({ business: e.target.value })}
-          />
-          <textarea
-            className={`${cell} mt-2 min-h-10 resize-none`}
-            placeholder="Business address"
-            value={inv.address}
-            onChange={(e) => patch({ address: e.target.value })}
-          />
-          <button
-            type="button"
-            onClick={onEditProfile}
-            className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline print:hidden"
-          >
-            <Pencil className="h-3.5 w-3.5" /> Edit business details
-          </button>
+          {/*
+           * Business name and address are read-only here — they are edited
+           * only through the Company Details overlay (the pencil button). The
+           * text keeps the same position and typography the old inline inputs
+           * had; when nothing is saved yet a muted prompt stands in.
+           */}
+          <div className="flex items-start gap-3">
+            <div className="min-w-0">
+              {inv.business.trim() ? (
+                <p
+                  className={cn(
+                    "break-words text-lg font-semibold text-foreground",
+                    t.headingFont,
+                  )}
+                >
+                  {inv.business}
+                </p>
+              ) : (
+                <p
+                  className={cn(
+                    "text-lg font-semibold italic text-muted-foreground/60 print:hidden",
+                    t.headingFont,
+                  )}
+                >
+                  Your business name
+                </p>
+              )}
+              {inv.address.trim() ? (
+                <p className="mt-2 whitespace-pre-line break-words text-sm text-muted-foreground">
+                  {inv.address}
+                </p>
+              ) : (
+                <p className="mt-2 text-sm italic text-muted-foreground/60 print:hidden">
+                  Add your business address from the edit button →
+                </p>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onEditProfile}
+              aria-label="Edit business details"
+              title="Edit business details"
+              className="shrink-0 print:hidden"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <div className="w-full sm:w-64">
           <div className={t.invoiceTitleWrap}>
@@ -189,7 +219,17 @@ export function InvoiceDocument({
       </div>
 
       <div className={t.itemsTop}>
-        <div className={cn("grid grid-cols-[1fr_60px_88px_88px_28px] gap-2", t.tableHead)}>
+        {/*
+         * The line-items table. On >=sm it is a 5-column grid with a header
+         * row. Below sm the header is hidden and each row becomes a stacked
+         * block: the description on its own line, then Qty / Rate / Amount /
+         * remove in a 2x2 grid, each with a small caption so the numbers stay
+         * labelled without the header. Every wrapper is `sm:contents`, so at
+         * >=sm the inner controls flatten straight back into the 5-col grid.
+         */}
+        <div
+          className={cn("hidden grid-cols-[1fr_60px_88px_88px_28px] gap-2 sm:grid", t.tableHead)}
+        >
           <span>Item</span>
           <span className="text-right">Qty</span>
           <span className="text-right">Rate</span>
@@ -199,40 +239,67 @@ export function InvoiceDocument({
         {inv.items.map((item) => (
           <div
             key={item.id}
-            className={cn("grid grid-cols-[1fr_60px_88px_88px_28px] items-center gap-2", t.itemRow)}
+            className={cn(
+              "space-y-2 sm:grid sm:grid-cols-[1fr_60px_88px_88px_28px] sm:items-center sm:gap-2 sm:space-y-0",
+              t.itemRow,
+            )}
           >
-            <input
-              className={cell}
-              placeholder="Description of service or item"
-              value={item.name}
-              onChange={(e) => setItem(item.id, "name", e.target.value)}
-            />
-            <input
-              type="number"
-              min={0}
-              aria-label="Quantity"
-              className={`${cell} text-right`}
-              value={item.qty}
-              onChange={(e) => setItem(item.id, "qty", e.target.value)}
-            />
-            <input
-              type="number"
-              min={0}
-              aria-label="Rate"
-              className={`${cell} text-right`}
-              value={item.rate}
-              onChange={(e) => setItem(item.id, "rate", e.target.value)}
-            />
-            <span className="px-2 text-right text-sm">
-              {money(item.qty * item.rate)}
-            </span>
-            <button
-              aria-label="Remove line"
-              onClick={() => removeItem(item.id)}
-              className="text-muted-foreground hover:text-destructive print:hidden"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <label className="block sm:contents">
+              <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+                Item
+              </span>
+              <input
+                className={cell}
+                placeholder="Description of service or item"
+                value={item.name}
+                onChange={(e) => setItem(item.id, "name", e.target.value)}
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-2 sm:contents">
+              <label className="sm:contents">
+                <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+                  Qty
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  aria-label="Quantity"
+                  className={`${cell} text-right`}
+                  value={item.qty}
+                  onChange={(e) => setItem(item.id, "qty", e.target.value)}
+                />
+              </label>
+              <label className="sm:contents">
+                <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+                  Rate
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  aria-label="Rate"
+                  className={`${cell} text-right`}
+                  value={item.rate}
+                  onChange={(e) => setItem(item.id, "rate", e.target.value)}
+                />
+              </label>
+              <div className="sm:contents">
+                <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+                  Amount
+                </span>
+                <span className="block px-2 py-1.5 text-left text-sm sm:py-0 sm:text-right">
+                  {money(item.qty * item.rate)}
+                </span>
+              </div>
+              <div className="flex items-center justify-end sm:contents">
+                <button
+                  aria-label="Remove line"
+                  onClick={() => removeItem(item.id)}
+                  className="text-muted-foreground hover:text-destructive print:hidden"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
         ))}
         <Button variant="outline" size="sm" className="mt-3 print:hidden" onClick={addItem}>
