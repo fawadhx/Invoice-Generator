@@ -1,4 +1,10 @@
 import type { Invoice } from "./invoice";
+import {
+  DEFAULT_FORMAT_PREFS,
+  type DateFormatId,
+  type FormatPrefs,
+  type NumberFormatId,
+} from "./locale-format";
 
 /**
  * A persisted, one-time business identity that auto-fills into every invoice.
@@ -24,6 +30,21 @@ export type CompanyProfile = {
   address: string;
   email: string;
   phone: string;
+
+  // ---- Currency & format (Phase B) ----
+  // Fixed at the profile level and applied to every invoice in this browser —
+  // there is no per-invoice override. See `src/lib/locale-format.ts`.
+  /** ISO 3166-1 alpha-2 country code, or `""` if never set. Drives the
+   *  auto-suggested defaults below; the user can override each one after. */
+  country: string;
+  /** ISO 4217 currency code (e.g. `"PKR"`). Informational — display comes
+   *  from `currencyDisplay`. */
+  currencyCode: string;
+  /** Literal string shown before every money amount (`"Rs."`, `"$"`, `"₨"`,
+   *  or anything the user types). */
+  currencyDisplay: string;
+  dateFormat: DateFormatId;
+  numberFormat: NumberFormatId;
 };
 
 export const COMPANY_PROFILE_KEY = "rapidai-company-profile";
@@ -36,7 +57,21 @@ export const emptyCompanyProfile: CompanyProfile = {
   address: "",
   email: "",
   phone: "",
+  country: "",
+  currencyCode: "USD",
+  currencyDisplay: DEFAULT_FORMAT_PREFS.currencyDisplay,
+  dateFormat: DEFAULT_FORMAT_PREFS.dateFormat,
+  numberFormat: DEFAULT_FORMAT_PREFS.numberFormat,
 };
+
+/** Pulls just the formatting preferences out of a profile. */
+export function formatPrefsOf(p: CompanyProfile): FormatPrefs {
+  return {
+    currencyDisplay: p.currencyDisplay || DEFAULT_FORMAT_PREFS.currencyDisplay,
+    dateFormat: p.dateFormat || DEFAULT_FORMAT_PREFS.dateFormat,
+    numberFormat: p.numberFormat || DEFAULT_FORMAT_PREFS.numberFormat,
+  };
+}
 
 /** True when the profile carries at least one meaningful value. */
 export function hasCompanyProfile(p: CompanyProfile): boolean {
@@ -77,6 +112,8 @@ export function saveCompanyProfile(p: CompanyProfile): void {
  */
 export function applyCompanyProfile(inv: Invoice, p: CompanyProfile): Invoice {
   const next = { ...inv };
+  // Currency is profile-owned (no per-invoice picker), so it is always synced.
+  if (p.currencyCode) next.currency = p.currencyCode;
   if (!next.business.trim() && p.businessName.trim()) next.business = p.businessName;
   if (!next.logo && p.logo) next.logo = p.logo;
   if (!next.address.trim() && p.address.trim()) next.address = p.address;

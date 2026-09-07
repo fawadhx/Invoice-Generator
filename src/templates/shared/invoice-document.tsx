@@ -2,14 +2,12 @@ import { useRef, type ReactNode } from "react";
 import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatInvoiceMoney } from "@/lib/invoice";
 import type { InvoiceTemplateProps, UiTheme } from "../types";
 
 // Shared affordance class defined in styles.css (@layer components).
 // Extra utilities (text-right, min-h-*, resize-none, font weight) are
 // appended per field where needed.
 const cell = "editable-field";
-const money = formatInvoiceMoney;
 
 type Props = InvoiceTemplateProps & { theme: UiTheme };
 
@@ -29,6 +27,7 @@ export function InvoiceDocument({
   removeItem,
   onLogo,
   onEditProfile,
+  formatMoney: money,
   theme: t,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -177,7 +176,7 @@ export function InvoiceDocument({
               tabIndex={-1}
               aria-label="Balance due (calculated)"
               className={`${cell} text-right text-sm font-semibold`}
-              value={money(balance, inv.currency)}
+              value={money(balance)}
             />
           </Row>
         </div>
@@ -219,7 +218,7 @@ export function InvoiceDocument({
               onChange={(e) => setItem(item.id, "rate", e.target.value)}
             />
             <span className="px-2 text-right text-sm">
-              {money(item.qty * item.rate, inv.currency)}
+              {money(item.qty * item.rate)}
             </span>
             <button
               aria-label="Remove line"
@@ -246,7 +245,7 @@ export function InvoiceDocument({
         </Block>
         <div className="space-y-2 text-sm">
           <Row label="Subtotal" labelClassName={t.label}>
-            <span className="block px-2 py-1.5 text-right">{money(subtotal, inv.currency)}</span>
+            <span className="block px-2 py-1.5 text-right">{money(subtotal)}</span>
           </Row>
           <Row label="Tax (%)" labelClassName={t.label}>
             <input
@@ -268,7 +267,7 @@ export function InvoiceDocument({
           </Row>
           <Row label="Total" labelClassName={t.label}>
             <span className="block px-2 py-1.5 text-right font-semibold">
-              {money(total, inv.currency)}
+              {money(total)}
             </span>
           </Row>
           <Row label="Amount paid" labelClassName={t.label}>
@@ -283,7 +282,7 @@ export function InvoiceDocument({
           <div className={t.totalsDivider}>
             <Row label="Balance due" labelClassName={t.label}>
               <span className="block px-2 py-1.5 text-right text-base font-bold">
-                {money(balance, inv.currency)}
+                {money(balance)}
               </span>
             </Row>
           </div>

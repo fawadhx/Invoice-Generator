@@ -27,6 +27,18 @@ export type InvoiceTemplateProps = {
   /** Handle a newly picked logo file. */
   onLogo: (file?: File) => void;
   /**
+   * Formats a money amount using the saved Company Profile's currency display
+   * + number format (e.g. `Rs. 52,889.50`). Same function drives the PDF, so
+   * screen and export always agree.
+   */
+  formatMoney: (value: number) => string;
+  /**
+   * Formats an ISO date (`YYYY-MM-DD`) using the saved profile's date format.
+   * The native `<input type="date">` still shows the browser's own format
+   * while editing — this is for any read-only date the document renders.
+   */
+  formatDate: (iso: string) => string;
+  /**
    * Opens the Company Details overlay (a shortcut to fill business name,
    * logo, address, email, phone and signature at once). The inline business
    * name / logo fields stay fully usable on their own.
@@ -48,8 +60,14 @@ export type InvoicePdfContext = {
   pageHeight: number;
   /** Outer page margin in pt. */
   margin: number;
-  /** Formats a number as PDF-safe currency (ISO code, e.g. `USD 1,200.00`). */
+  /**
+   * Formats a money amount with the saved profile's currency display +
+   * number format (e.g. `Rs. 1,200.00`). Identical to the on-screen
+   * formatter.
+   */
   money: (value: number) => string;
+  /** Formats an ISO date (`YYYY-MM-DD`) with the saved profile's date format. */
+  date: (iso: string) => string;
   /** Decodes any uploaded logo to a PNG data URL jsPDF can embed. */
   logoAsPng: (src: string) => Promise<{ url: string; width: number; height: number } | null>;
 };

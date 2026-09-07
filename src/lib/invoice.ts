@@ -23,6 +23,12 @@ export type Invoice = {
   discount: number;
   amountPaid: number;
   notes: string;
+  /**
+   * ISO currency code, kept in sync from the Company Profile (which owns all
+   * currency & format settings — there is no per-invoice picker). Money is
+   * *displayed* via the profile's `currencyDisplay` + `numberFormat`, not
+   * from this code directly; it is retained for saved-invoice data hygiene.
+   */
   currency: string;
   /**
    * Id of the visual template used to render the invoice on screen and in the
@@ -57,22 +63,4 @@ export function computeTotals(inv: Invoice): InvoiceTotals {
   const total = subtotal + tax - discount;
   const amountPaid = num(inv.amountPaid);
   return { subtotal, tax, discount, total, amountPaid, balance: total - amountPaid };
-}
-
-/** On-screen currency formatting — uses the local symbol (e.g. `$1,200.00`). */
-export function formatInvoiceMoney(value: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(num(value));
-}
-
-/**
- * Currency formatting for the PDF. Uses the ISO code (e.g. `USD 1,200.00`)
- * because the standard PDF fonts cannot render every currency symbol
- * (₹, ₨ and others render as blank boxes).
- */
-export function formatPdfMoney(value: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    currencyDisplay: "code",
-  }).format(num(value));
 }

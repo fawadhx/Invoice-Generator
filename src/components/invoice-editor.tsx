@@ -6,10 +6,12 @@ import { computeTotals, type Invoice, type InvoiceItem as Item } from "@/lib/inv
 import {
   applyCompanyProfile,
   emptyCompanyProfile,
+  formatPrefsOf,
   loadCompanyProfile,
   saveCompanyProfile,
   type CompanyProfile,
 } from "@/lib/company-profile";
+import { formatDate, formatMoney, formatNumber } from "@/lib/locale-format";
 import { CompanyProfileDialog } from "@/components/company-profile-dialog";
 import { DEFAULT_TEMPLATE_ID, getInvoiceTemplate, invoiceTemplateList } from "@/templates";
 
@@ -101,6 +103,13 @@ export function InvoiceEditor() {
   // shows as a negative "credit" amount.
   const totals = useMemo(() => computeTotals(inv), [inv]);
 
+  // Currency & date formatting is owned entirely by the Company Profile
+  // (no per-invoice override). Falls back to the app's original US-style
+  // formatting when no profile has been saved.
+  const prefs = useMemo(() => formatPrefsOf(profile), [profile]);
+  const fmtMoney = useMemo(() => (v: number) => formatMoney(v, prefs), [prefs]);
+  const fmtDate = useMemo(() => (iso: string) => formatDate(iso, prefs.dateFormat), [prefs]);
+
   // ---- Visual layer: the swappable template ----
   // `selectedTemplate` decides which layout renders the invoice on screen and
   // which design the PDF exporter draws. No picker UI yet — change the state
@@ -134,7 +143,7 @@ export function InvoiceEditor() {
     setDownloading(true);
     try {
       const { generateInvoicePdf } = await import("@/lib/invoice-pdf");
-      await generateInvoicePdf(inv, totals);
+      await generateInvoicePdf(inv, totals, prefs);
     } catch (err) {
       console.error("Invoice PDF generation failed", err);
       setDownloadError("Could not generate the PDF. Please try again.");
@@ -146,21 +155,24 @@ export function InvoiceEditor() {
   return (
     <>
       <div className="border-b border-border bg-card print:hidden">
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-2 px-4 py-3 lg:px-6">
-          <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            Currency
-            <select
-              className="h-9 rounded-sm border border-border bg-card px-2 text-sm text-foreground"
-              value={inv.currency}
-              onChange={(e) => patch({ currency: e.target.value })}
-            >
-              {["USD", "EUR", "GBP", "CAD", "AUD", "PKR", "INR"].map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-3 text-xs text-muted-foreground lg:px-6">
+          <span>
+            Currency <span className="font-medium text-foreground">{prefs.currencyDisplay}</span>
+            <span className="mx-1.5 text-border">•</span>
+            Dates <span className="font-medium text-foreground">{prefs.dateFormat}</span>
+            <span className="mx-1.5 text-border">•</span>
+            Numbers{" "}
+            <span className="font-medium text-foreground">
+              {formatNumber(1234.56, prefs.numberFormat)}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            className="font-medium text-primary hover:underline"
+          >
+            Change
+          </button>
         </div>
       </div>
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:flex-row lg:px-6">
@@ -173,6 +185,8 @@ export function InvoiceEditor() {
           removeItem={removeItem}
           onLogo={onLogo}
           onEditProfile={() => setProfileOpen(true)}
+          formatMoney={fmtMoney}
+          formatDate={fmtDate}
         />
 
         <aside className="w-full shrink-0 space-y-4 lg:sticky lg:top-6 lg:w-60 lg:self-start print:hidden">

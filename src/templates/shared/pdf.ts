@@ -12,7 +12,7 @@ import type { InvoicePdfContext, PdfTheme } from "../types";
  * reproduces the original single-style exporter exactly.
  */
 export async function renderInvoicePdf(
-  { doc, inv, totals, pageWidth, pageHeight, margin: MARGIN, money, logoAsPng }: InvoicePdfContext,
+  { doc, inv, totals, pageWidth, pageHeight, margin: MARGIN, money, date, logoAsPng }: InvoicePdfContext,
   theme: PdfTheme,
 ): Promise<void> {
   const right = pageWidth - MARGIN;
@@ -81,9 +81,9 @@ export async function renderInvoicePdf(
   // ---- Header: meta (right) ----
   const meta: Array<[string, string]> = [
     ["Invoice #", inv.invoiceNo || "—"],
-    ["Date", inv.date || "—"],
+    ["Date", date(inv.date) || "—"],
     ["Payment terms", inv.terms || "—"],
-    ["Due date", inv.dueDate || "—"],
+    ["Due date", date(inv.dueDate) || "—"],
   ];
   doc.setFontSize(10);
   let metaY = MARGIN + 32;

@@ -18,8 +18,8 @@ const FAQ = [
     a: 'Click "Download Invoice". The invoice is generated as a clean, professional PDF and downloads straight to your device — no print dialog — ready to email to your client.',
   },
   {
-    q: "Can I add my company logo and choose a currency?",
-    a: "Yes. Upload your logo, pick from USD, EUR, GBP, CAD, AUD, PKR or INR, add tax, discount and amount paid, and the balance due is calculated automatically.",
+    q: "Can I add my company logo and set my currency?",
+    a: "Yes. Upload your logo, then pick your country to set the currency, date format and number format automatically — or type in any currency symbol you like. Add tax, discount and amount paid, and the balance due is calculated for you.",
   },
   {
     q: "Is my invoice data private?",
@@ -159,7 +159,7 @@ const jsonLd = {
         "Download invoices as PDF",
         "Add company logo",
         "Automatic tax, discount and balance due",
-        "Multi-currency (USD, EUR, GBP, CAD, AUD, PKR, INR)",
+        "Any currency, date format and number format — pick your country or set your own",
         "No signup and no watermark",
       ],
       publisher: { "@id": `${SITE_URL}/#org` },
@@ -372,7 +372,10 @@ function Index() {
                   <strong>Online invoice maker</strong> that works on desktop, laptop, tablet and
                   phone.
                 </li>
-                <li>Multi-currency support: USD, EUR, GBP, CAD, AUD, PKR and INR.</li>
+                <li>
+                  Bill in any currency — pick your country to set the currency symbol, date format
+                  and number format, or enter a custom symbol of your own.
+                </li>
                 <li>
                   Automatic totals for quantity, rate, tax percentage, discount and amount paid.
                 </li>

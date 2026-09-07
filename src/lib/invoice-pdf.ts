@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import { getInvoiceTemplate } from "@/templates";
-import { formatPdfMoney, type Invoice, type InvoiceTotals } from "./invoice";
+import type { Invoice, InvoiceTotals } from "./invoice";
+import { DEFAULT_FORMAT_PREFS, formatDate, formatMoney, type FormatPrefs } from "./locale-format";
 
 const MARGIN = 40;
 
@@ -57,8 +58,16 @@ async function logoAsPng(
  * fetched (dynamic import), keeping jsPDF's drawing code out of the main
  * bundle. `totals` is the derived totals block; balance due is never passed
  * in as an editable value.
+ *
+ * `prefs` is the currency / date / number formatting from the saved Company
+ * Profile — the same object the on-screen document uses, so the PDF matches
+ * exactly. Defaults to the app's original US-style formatting.
  */
-export async function generateInvoicePdf(inv: Invoice, totals: InvoiceTotals): Promise<void> {
+export async function generateInvoicePdf(
+  inv: Invoice,
+  totals: InvoiceTotals,
+  prefs: FormatPrefs = DEFAULT_FORMAT_PREFS,
+): Promise<void> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const template = getInvoiceTemplate(inv.selectedTemplate);
   const renderPdf = await template.loadPdfRenderer();
@@ -70,7 +79,8 @@ export async function generateInvoicePdf(inv: Invoice, totals: InvoiceTotals): P
     pageWidth: doc.internal.pageSize.getWidth(),
     pageHeight: doc.internal.pageSize.getHeight(),
     margin: MARGIN,
-    money: (value: number) => formatPdfMoney(value, inv.currency),
+    money: (value: number) => formatMoney(value, prefs),
+    date: (iso: string) => formatDate(iso, prefs.dateFormat),
     logoAsPng,
   });
 
