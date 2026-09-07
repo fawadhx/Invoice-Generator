@@ -50,6 +50,57 @@ export type InvoicePdfContext = {
 
 export type InvoicePdfRenderer = (ctx: InvoicePdfContext) => Promise<void>;
 
+/**
+ * Styling knobs for the on-screen invoice document. Every template renders
+ * the *same* editable fields via `shared/invoice-document.tsx`; a `UiTheme`
+ * is the only thing that changes how it looks (fonts, colors, spacing,
+ * header + table treatment).
+ */
+export type UiTheme = {
+  /** Classes for the `<article id="invoice-sheet">` surface. */
+  sheet: string;
+  /** Extra font class for headings (e.g. `"font-serif"`); `""` for the default sans. */
+  headingFont: string;
+  /** Wrapper around the "INVOICE" word — alignment, plus the accent band if any. */
+  invoiceTitleWrap: string;
+  /** The "INVOICE" word itself — size, weight, color. */
+  invoiceTitleText: string;
+  /** Section and row labels ("Bill from", "Date", "Subtotal"…). */
+  label: string;
+  /** Top margin before the parties grid. */
+  partiesTop: string;
+  /** Top margin before the line-items table. */
+  itemsTop: string;
+  /** Top margin before the notes / totals grid. */
+  summaryTop: string;
+  /** The line-items header row (filled bar or hairline). */
+  tableHead: string;
+  /** Each line-item row (border treatment, vertical padding). */
+  itemRow: string;
+  /** The divider block wrapping "Balance due". */
+  totalsDivider: string;
+};
+
+/**
+ * Styling knobs for the exported PDF — the print-side mirror of `UiTheme`.
+ * Consumed by `shared/pdf.ts`.
+ */
+export type PdfTheme = {
+  /** Standard jsPDF font used for headings. */
+  headingFont: "helvetica" | "times";
+  /**
+   * Accent RGB for section labels, the totals divider and the INVOICE band.
+   * `null` keeps the design monochrome.
+   */
+  accent: [number, number, number] | null;
+  /** Draw a filled accent band behind the "INVOICE" word. */
+  invoiceBand: boolean;
+  /** Render the table header as a hairline underline instead of a filled bar. */
+  tableHeadHairline: boolean;
+  /** Fill color for the table header bar when it is not a hairline. */
+  tableHeadFill: [number, number, number];
+};
+
 /** Static description of a template — safe to read anywhere, no components. */
 export type InvoiceTemplateMeta = {
   id: string;

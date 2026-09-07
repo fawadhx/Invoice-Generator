@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { computeTotals, type Invoice, type InvoiceItem as Item } from "@/lib/invoice";
-import { DEFAULT_TEMPLATE_ID, getInvoiceTemplate } from "@/templates";
+import { DEFAULT_TEMPLATE_ID, getInvoiceTemplate, invoiceTemplateList } from "@/templates";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const today = new Date();
@@ -146,6 +147,33 @@ export function InvoiceEditor() {
               {downloadError}
             </p>
           )}
+
+          <div className="space-y-2 rounded-sm border border-border bg-card p-4">
+            <p className="text-xs font-medium text-muted-foreground">Template</p>
+            <div className="grid gap-1.5">
+              {invoiceTemplateList.map((tpl) => {
+                const active = tpl.id === inv.selectedTemplate;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => patch({ selectedTemplate: tpl.id })}
+                    className={cn(
+                      "rounded-sm border px-3 py-2 text-left transition-colors",
+                      active
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                    )}
+                  >
+                    <span className="block text-sm font-medium">{tpl.name}</span>
+                    <span className="mt-0.5 block text-[11px] leading-4">{tpl.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="space-y-2 rounded-sm border border-border bg-card p-4">
             <Button
               variant="ghost"
