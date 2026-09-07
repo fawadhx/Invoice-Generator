@@ -3,6 +3,12 @@ export type InvoiceItem = { id: number; name: string; qty: number; rate: number 
 export type Invoice = {
   logo?: string;
   business: string;
+  /**
+   * Business address, shown under the business name in the header (on screen
+   * and in the PDF). Auto-filled from the saved Company Profile on a blank
+   * invoice; editable inline without writing back to the profile.
+   */
+  address: string;
   from: string;
   fromPhone: string;
   to: string;

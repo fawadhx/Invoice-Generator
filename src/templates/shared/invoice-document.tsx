@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatInvoiceMoney } from "@/lib/invoice";
@@ -28,6 +28,7 @@ export function InvoiceDocument({
   addItem,
   removeItem,
   onLogo,
+  onEditProfile,
   theme: t,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -73,6 +74,19 @@ export function InvoiceDocument({
             value={inv.business}
             onChange={(e) => patch({ business: e.target.value })}
           />
+          <textarea
+            className={`${cell} mt-2 min-h-10 resize-none`}
+            placeholder="Business address"
+            value={inv.address}
+            onChange={(e) => patch({ address: e.target.value })}
+          />
+          <button
+            type="button"
+            onClick={onEditProfile}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline print:hidden"
+          >
+            <Pencil className="h-3.5 w-3.5" /> Edit business details
+          </button>
         </div>
         <div className="w-full sm:w-64">
           <div className={t.invoiceTitleWrap}>

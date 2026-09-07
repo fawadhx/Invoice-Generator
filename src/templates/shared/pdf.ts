@@ -47,6 +47,14 @@ export async function renderInvoicePdf(
     doc.text(lines, MARGIN, leftY + 12);
     leftY += lines.length * 18 + 4;
   }
+  if (inv.address.trim()) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    const lines = doc.splitTextToSize(inv.address.trim(), pageWidth / 2 - MARGIN);
+    doc.text(lines, MARGIN, leftY + 11);
+    leftY += lines.length * 11 + 4;
+  }
 
   // ---- Header: INVOICE (right) ----
   if (theme.invoiceBand && theme.accent) {

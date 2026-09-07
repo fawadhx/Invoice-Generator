@@ -3,6 +3,14 @@ import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { computeTotals, type Invoice, type InvoiceItem as Item } from "@/lib/invoice";
+import {
+  applyCompanyProfile,
+  emptyCompanyProfile,
+  loadCompanyProfile,
+  saveCompanyProfile,
+  type CompanyProfile,
+} from "@/lib/company-profile";
+import { CompanyProfileDialog } from "@/components/company-profile-dialog";
 import { DEFAULT_TEMPLATE_ID, getInvoiceTemplate, invoiceTemplateList } from "@/templates";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -12,6 +20,7 @@ due.setDate(today.getDate() + 14);
 
 const initial: Invoice = {
   business: "",
+  address: "",
   from: "",
   fromPhone: "",
   to: "",
@@ -34,15 +43,29 @@ export function InvoiceEditor() {
   const [inv, setInv] = useState<Invoice>(initial);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  // The persisted business identity. Lives under its own localStorage key,
+  // is never touched by "Clear invoice", and only the overlay writes it.
+  const [profile, setProfile] = useState<CompanyProfile>(emptyCompanyProfile);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
+    // Start from the last saved invoice (if any)…
+    let base = initial;
     const stored = localStorage.getItem("rapidai-invoice");
-    if (!stored) return;
-    try {
-      setInv((current) => ({ ...current, ...JSON.parse(stored) }));
-    } catch {
-      /* ignore corrupt data */
+    if (stored) {
+      try {
+        base = { ...base, ...JSON.parse(stored) } as Invoice;
+      } catch {
+        /* ignore corrupt data */
+      }
     }
+    // …then let the saved Company Profile fill any field still left blank.
+    const savedProfile = loadCompanyProfile();
+    if (savedProfile) {
+      setProfile(savedProfile);
+      base = applyCompanyProfile(base, savedProfile);
+    }
+    setInv(base);
   }, []);
   useEffect(() => {
     const timer = window.setTimeout(
@@ -84,6 +107,27 @@ export function InvoiceEditor() {
   // value (React DevTools, or the default above) to swap templates live.
   const template = getInvoiceTemplate(inv.selectedTemplate);
   const Layout = template.Layout;
+
+  // Overlay "Save": persist the profile, keep it in state, and let it fill
+  // any field the current invoice has left blank (never overwrites typed-in
+  // values — see `applyCompanyProfile`).
+  const handleProfileSave = (next: CompanyProfile) => {
+    saveCompanyProfile(next);
+    setProfile(next);
+    setInv((current) => applyCompanyProfile(current, next));
+  };
+
+  const handleClearInvoice = () => {
+    localStorage.removeItem("rapidai-invoice");
+    // Reset the per-invoice fields only, then re-apply the saved profile so a
+    // fresh invoice still starts from the business identity.
+    const blank: Invoice = {
+      ...initial,
+      selectedTemplate: inv.selectedTemplate,
+      items: [{ id: Date.now(), name: "", qty: 1, rate: 0 }],
+    };
+    setInv(applyCompanyProfile(blank, profile));
+  };
 
   const handleDownload = async () => {
     setDownloadError(null);
@@ -128,6 +172,7 @@ export function InvoiceEditor() {
           addItem={addItem}
           removeItem={removeItem}
           onLogo={onLogo}
+          onEditProfile={() => setProfileOpen(true)}
         />
 
         <aside className="w-full shrink-0 space-y-4 lg:sticky lg:top-6 lg:w-60 lg:self-start print:hidden">
@@ -175,19 +220,7 @@ export function InvoiceEditor() {
           </div>
 
           <div className="space-y-2 rounded-sm border border-border bg-card p-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full"
-              onClick={() => {
-                localStorage.removeItem("rapidai-invoice");
-                setInv({
-                  ...initial,
-                  selectedTemplate: inv.selectedTemplate,
-                  items: [{ id: Date.now(), name: "", qty: 1, rate: 0 }],
-                });
-              }}
-            >
+            <Button variant="ghost" size="sm" className="w-full" onClick={handleClearInvoice}>
               Clear invoice
             </Button>
           </div>
@@ -196,6 +229,13 @@ export function InvoiceEditor() {
           </p>
         </aside>
       </div>
+
+      <CompanyProfileDialog
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+        profile={profile}
+        onSave={handleProfileSave}
+      />
     </>
   );
 }

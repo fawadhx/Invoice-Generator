@@ -26,6 +26,12 @@ export type InvoiceTemplateProps = {
   removeItem: (id: number) => void;
   /** Handle a newly picked logo file. */
   onLogo: (file?: File) => void;
+  /**
+   * Opens the Company Details overlay (a shortcut to fill business name,
+   * logo, address, email, phone and signature at once). The inline business
+   * name / logo fields stay fully usable on their own.
+   */
+  onEditProfile: () => void;
 };
 
 /**
