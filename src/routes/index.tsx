@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronDown } from "lucide-react";
 import { InvoiceEditor } from "@/components/invoice-editor";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -125,6 +126,34 @@ const GUIDE_FAQ = [
     a: "For a quick one-off invoice, a free online invoice generator like this one is the fastest option. Businesses that also need expense tracking and reporting often use paid suites such as FreshBooks, Wave, Zoho Invoice or QuickBooks. If you just need a professional PDF now, the free tool is the quickest route.",
   },
 ];
+
+/**
+ * Collapsible FAQ list. Uses native <details>/<summary> so every question and
+ * answer stays in the server-rendered HTML (collapsed by CSS, not lazy-loaded)
+ * and remains keyboard accessible without extra JS. Each item opens/closes
+ * independently; all start collapsed.
+ */
+function FaqList({ items }: { items: { q: string; a: string }[] }) {
+  return (
+    <div className="space-y-3">
+      {items.map((item) => (
+        <details
+          key={item.q}
+          className="group rounded-md border border-border [&_summary::-webkit-details-marker]:hidden"
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-medium">
+            <span>{item.q}</span>
+            <ChevronDown
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+            />
+          </summary>
+          <p className="px-4 pb-4 text-sm leading-6 text-muted-foreground">{item.a}</p>
+        </details>
+      ))}
+    </div>
+  );
+}
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -436,14 +465,7 @@ function Index() {
               <h2 id="faq" className="text-xl font-semibold tracking-tight">
                 Frequently asked questions
               </h2>
-              <dl className="space-y-4">
-                {FAQ.map((item) => (
-                  <div key={item.q} className="rounded-md border border-border p-4">
-                    <dt className="text-sm font-medium">{item.q}</dt>
-                    <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.a}</dd>
-                  </div>
-                ))}
-              </dl>
+              <FaqList items={FAQ} />
             </div>
 
             <div className="space-y-4">
@@ -454,14 +476,7 @@ function Index() {
                 Common questions about what an invoice is, what to put on it, and how to send it and
                 get paid — plus how this <strong>free invoice generator</strong> fits in.
               </p>
-              <dl className="space-y-4">
-                {GUIDE_FAQ.map((item) => (
-                  <div key={item.q} className="rounded-md border border-border p-4">
-                    <dt className="text-sm font-medium">{item.q}</dt>
-                    <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.a}</dd>
-                  </div>
-                ))}
-              </dl>
+              <FaqList items={GUIDE_FAQ} />
             </div>
           </div>
         </section>

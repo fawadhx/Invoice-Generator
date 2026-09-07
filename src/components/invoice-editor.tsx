@@ -14,7 +14,7 @@ import {
   saveCompanyProfile,
   type CompanyProfile,
 } from "@/lib/company-profile";
-import { formatDate, formatMoney, formatNumber } from "@/lib/locale-format";
+import { formatDate, formatMoney } from "@/lib/locale-format";
 import { CompanyProfileDialog } from "@/components/company-profile-dialog";
 import { DEFAULT_TEMPLATE_ID, getInvoiceTemplate, invoiceTemplateList } from "@/templates";
 
@@ -186,13 +186,6 @@ export function InvoiceEditor() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-3 text-xs text-muted-foreground lg:px-6">
           <span>
             Currency <span className="font-medium text-foreground">{prefs.currencyDisplay}</span>
-            <span className="mx-1.5 text-border">•</span>
-            Dates <span className="font-medium text-foreground">{prefs.dateFormat}</span>
-            <span className="mx-1.5 text-border">•</span>
-            Numbers{" "}
-            <span className="font-medium text-foreground">
-              {formatNumber(1234.56, prefs.numberFormat)}
-            </span>
           </span>
           <button
             type="button"
