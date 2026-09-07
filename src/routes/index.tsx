@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { InvoiceEditor } from "@/components/invoice-editor";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -297,6 +297,29 @@ function Index() {
             A free online invoice maker with no signup and no accounting software. Fill in the
             invoice below, add your logo, and download a professional PDF.
           </p>
+          <nav
+            aria-label="Site pages"
+            className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm"
+          >
+            <a href="#invoice-sheet" className="font-medium text-primary hover:underline">
+              Create an invoice
+            </a>
+            <span aria-hidden="true" className="text-border">
+              •
+            </span>
+            <Link to="/about" className="text-muted-foreground hover:text-foreground">
+              About Us
+            </Link>
+            <Link to="/contact" className="text-muted-foreground hover:text-foreground">
+              Contact Us
+            </Link>
+            <Link to="/privacy" className="text-muted-foreground hover:text-foreground">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="text-muted-foreground hover:text-foreground">
+              Terms &amp; Conditions
+            </Link>
+          </nav>
         </div>
       </section>
 
