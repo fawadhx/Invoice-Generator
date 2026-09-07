@@ -28,6 +28,7 @@ export function InvoiceDocument({
   onLogo,
   onEditProfile,
   formatMoney: money,
+  signatureUrl,
   theme: t,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -288,6 +289,26 @@ export function InvoiceDocument({
           </div>
         </div>
       </div>
+
+      {signatureUrl && (
+        <div className="mt-10 flex justify-end print:mt-14">
+          <div className="w-52 max-w-full">
+            <img
+              src={signatureUrl}
+              alt="Authorized signature"
+              className="h-16 w-auto max-w-full rounded-sm bg-white object-contain object-left p-1.5"
+            />
+            <div className="mt-1.5 border-t border-foreground/70 pt-1.5">
+              {inv.business.trim() && (
+                <p className={cn("text-sm font-semibold text-foreground", t.headingFont)}>
+                  {inv.business}
+                </p>
+              )}
+              <p className={cn("mt-0.5", t.label)}>Signature</p>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

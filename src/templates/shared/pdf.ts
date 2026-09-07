@@ -12,7 +12,18 @@ import type { InvoicePdfContext, PdfTheme } from "../types";
  * reproduces the original single-style exporter exactly.
  */
 export async function renderInvoicePdf(
-  { doc, inv, totals, pageWidth, pageHeight, margin: MARGIN, money, date, logoAsPng }: InvoicePdfContext,
+  {
+    doc,
+    inv,
+    totals,
+    pageWidth,
+    pageHeight,
+    margin: MARGIN,
+    money,
+    date,
+    signatureUrl,
+    imageAsPng,
+  }: InvoicePdfContext,
   theme: PdfTheme,
 ): Promise<void> {
   const right = pageWidth - MARGIN;
@@ -26,7 +37,7 @@ export async function renderInvoicePdf(
   // ---- Header: logo + business name (left) ----
   let leftY = MARGIN;
   if (inv.logo) {
-    const logo = await logoAsPng(inv.logo);
+    const logo = await imageAsPng(inv.logo);
     if (logo) {
       const ratio = Math.min(150 / logo.width, 64 / logo.height, 1);
       const w = logo.width * ratio;
@@ -211,6 +222,48 @@ export async function renderInvoicePdf(
     doc.text(row.label, labelX, y + 6);
     doc.text(row.value, right, y + 6, { align: "right" });
     y += row.strong ? 20 : 16;
+  }
+
+  // ---- Signature ----
+  // Sits under the totals, right-aligned, above a printed business name and a
+  // "Signature" caption — mirrors the on-screen block. Only drawn when a
+  // signature is saved; if the block would spill past the bottom margin it
+  // moves to a fresh page rather than being clipped.
+  if (signatureUrl) {
+    const sig = await imageAsPng(signatureUrl);
+    if (sig) {
+      const maxW = 150;
+      const maxH = 48;
+      const ratio = Math.min(maxW / sig.width, maxH / sig.height, 1);
+      const w = sig.width * ratio;
+      const h = sig.height * ratio;
+      const blockLeft = right - maxW;
+      const nameLines = inv.business.trim() ? doc.splitTextToSize(inv.business.trim(), maxW) : [];
+      const blockH = h + 6 + nameLines.length * 12 + 14;
+      let sy = y + 26;
+      if (sy + blockH > pageHeight - MARGIN) {
+        doc.addPage();
+        sy = MARGIN;
+      }
+      doc.addImage(sig.url, "PNG", blockLeft, sy, w, h);
+      const lineY = sy + h + 6;
+      doc.setDrawColor(120);
+      doc.setLineWidth(0.75);
+      doc.line(blockLeft, lineY, right, lineY);
+      let ty = lineY + 12;
+      if (nameLines.length) {
+        doc.setFont(heading, "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(30);
+        doc.text(nameLines, blockLeft, ty);
+        ty += nameLines.length * 12;
+      }
+      doc.setFont(heading, "bold");
+      doc.setFontSize(8);
+      setLabelColor();
+      doc.text("SIGNATURE", blockLeft, ty);
+      y = ty;
+    }
   }
 
   // ---- Notes ----

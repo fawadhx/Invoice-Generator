@@ -39,6 +39,14 @@ export type InvoiceTemplateProps = {
    */
   formatDate: (iso: string) => string;
   /**
+   * The saved Company Profile's signature as a data URL, or `""` when none
+   * has been set. Rendered near the foot of the document (image + printed
+   * business name + a "Signature" caption) only when non-empty — an empty
+   * string leaves the invoice looking exactly as it did before. Profile-owned,
+   * like the currency / date formatters; never editable inline.
+   */
+  signatureUrl: string;
+  /**
    * Opens the Company Details overlay (a shortcut to fill business name,
    * logo, address, email, phone and signature at once). The inline business
    * name / logo fields stay fully usable on their own.
@@ -68,8 +76,18 @@ export type InvoicePdfContext = {
   money: (value: number) => string;
   /** Formats an ISO date (`YYYY-MM-DD`) with the saved profile's date format. */
   date: (iso: string) => string;
-  /** Decodes any uploaded logo to a PNG data URL jsPDF can embed. */
-  logoAsPng: (src: string) => Promise<{ url: string; width: number; height: number } | null>;
+  /**
+   * The saved Company Profile's signature as a data URL, or `""` when none
+   * has been set. Drawn near the foot of the invoice (image + business name +
+   * "Signature" caption) only when non-empty.
+   */
+  signatureUrl: string;
+  /**
+   * Decodes any uploaded image (logo or signature) to a PNG data URL jsPDF
+   * can embed, regardless of the original format. `null` if it cannot be
+   * decoded.
+   */
+  imageAsPng: (src: string) => Promise<{ url: string; width: number; height: number } | null>;
 };
 
 export type InvoicePdfRenderer = (ctx: InvoicePdfContext) => Promise<void>;

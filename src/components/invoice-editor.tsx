@@ -167,7 +167,7 @@ export function InvoiceEditor() {
     setDownloading(true);
     try {
       const { generateInvoicePdf } = await import("@/lib/invoice-pdf");
-      await generateInvoicePdf(inv, totals, prefs);
+      await generateInvoicePdf(inv, totals, prefs, profile.signatureUrl);
     } catch (err) {
       console.error("Invoice PDF generation failed", err);
       setDownloadError("Could not generate the PDF. Please try again.");
@@ -211,6 +211,7 @@ export function InvoiceEditor() {
           onEditProfile={() => setProfileOpen(true)}
           formatMoney={fmtMoney}
           formatDate={fmtDate}
+          signatureUrl={profile.signatureUrl}
         />
 
         <aside className="w-full shrink-0 space-y-4 lg:sticky lg:top-6 lg:w-60 lg:self-start print:hidden">

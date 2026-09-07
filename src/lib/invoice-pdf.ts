@@ -23,11 +23,11 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Re-encodes any uploaded logo (png/jpeg/webp/gif/…) to a PNG data URL so
- * jsPDF can embed it regardless of the original format. Returns null if the
- * image cannot be decoded or has no intrinsic size.
+ * Re-encodes any uploaded image — logo or signature (png/jpeg/webp/gif/…) —
+ * to a PNG data URL so jsPDF can embed it regardless of the original format.
+ * Returns null if the image cannot be decoded or has no intrinsic size.
  */
-async function logoAsPng(
+async function imageAsPng(
   src: string,
 ): Promise<{ url: string; width: number; height: number } | null> {
   try {
@@ -62,11 +62,16 @@ async function logoAsPng(
  * `prefs` is the currency / date / number formatting from the saved Company
  * Profile — the same object the on-screen document uses, so the PDF matches
  * exactly. Defaults to the app's original US-style formatting.
+ *
+ * `signatureUrl` is the saved Company Profile's signature (a data URL), or
+ * `""` for none — passed straight through so every template's renderer can
+ * draw the signature block in the same place it appears on screen.
  */
 export async function generateInvoicePdf(
   inv: Invoice,
   totals: InvoiceTotals,
   prefs: FormatPrefs = DEFAULT_FORMAT_PREFS,
+  signatureUrl = "",
 ): Promise<void> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const template = getInvoiceTemplate(inv.selectedTemplate);
@@ -81,7 +86,8 @@ export async function generateInvoicePdf(
     margin: MARGIN,
     money: (value: number) => formatMoney(value, prefs),
     date: (iso: string) => formatDate(iso, prefs.dateFormat),
-    logoAsPng,
+    signatureUrl,
+    imageAsPng,
   });
 
   doc.save(safeFileName(inv.invoiceNo));
