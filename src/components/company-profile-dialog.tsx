@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { CompanyProfile } from "@/lib/company-profile";
+import { formatInvoiceNumber, hasInvoiceNumbering, type CompanyProfile } from "@/lib/company-profile";
 import {
   COUNTRIES,
   DATE_FORMAT_OPTIONS,
@@ -420,6 +420,75 @@ export function CompanyProfileDialog({ open, onOpenChange, profile, onSave }: Pr
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Invoice numbering */}
+          <div className="space-y-3 rounded-sm border border-border bg-muted/30 p-3">
+            <div>
+              <Label className="text-sm font-semibold">Invoice numbering</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Set a prefix to number new invoices automatically. Leave the prefix blank to keep
+                typing invoice numbers yourself.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="cp-prefix">Prefix</Label>
+                <Input
+                  id="cp-prefix"
+                  value={draft.invoicePrefix}
+                  onChange={(e) => setDraft((d) => ({ ...d, invoicePrefix: e.target.value }))}
+                  placeholder="INV-"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cp-nextnum">Next number</Label>
+                <Input
+                  id="cp-nextnum"
+                  type="number"
+                  min={1}
+                  value={draft.nextInvoiceNumber}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      nextInvoiceNumber: Math.max(1, Math.floor(Number(e.target.value) || 1)),
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cp-padding">Pad to</Label>
+                <Input
+                  id="cp-padding"
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={draft.numberPadding}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      numberPadding: Math.min(10, Math.max(0, Math.floor(Number(e.target.value) || 0))),
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="rounded-sm border border-border bg-card p-3">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Next invoice number
+              </p>
+              <p className="mt-1 text-sm font-semibold text-foreground">
+                {hasInvoiceNumbering(draft) ? (
+                  formatInvoiceNumber(draft, draft.nextInvoiceNumber)
+                ) : (
+                  <span className="font-normal text-muted-foreground">
+                    Manual — you enter it on each invoice
+                  </span>
+                )}
+              </p>
             </div>
           </div>
 

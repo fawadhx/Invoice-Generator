@@ -45,6 +45,20 @@ export type CompanyProfile = {
   currencyDisplay: string;
   dateFormat: DateFormatId;
   numberFormat: NumberFormatId;
+
+  // ---- Invoice numbering (Phase C) ----
+  // A prefix + running counter so each *new* invoice is numbered automatically
+  // instead of the user retyping it. Only the prefix being non-empty turns the
+  // scheme on (see `hasInvoiceNumbering`); otherwise the invoice number stays a
+  // plain manual field. The counter only advances when a new number is handed
+  // out (fresh invoice / "Clear invoice") — editing the number on an invoice
+  // never writes back here.
+  /** String placed before the number, e.g. `"INV-"`. `""` = numbering off. */
+  invoicePrefix: string;
+  /** The next integer to assign. Starts at 1. */
+  nextInvoiceNumber: number;
+  /** Zero-pad the number to this width (`3` → `001`). `0` = no padding. */
+  numberPadding: number;
 };
 
 export const COMPANY_PROFILE_KEY = "rapidai-company-profile";
@@ -62,6 +76,9 @@ export const emptyCompanyProfile: CompanyProfile = {
   currencyDisplay: DEFAULT_FORMAT_PREFS.currencyDisplay,
   dateFormat: DEFAULT_FORMAT_PREFS.dateFormat,
   numberFormat: DEFAULT_FORMAT_PREFS.numberFormat,
+  invoicePrefix: "",
+  nextInvoiceNumber: 1,
+  numberPadding: 0,
 };
 
 /** Pulls just the formatting preferences out of a profile. */
@@ -70,6 +87,43 @@ export function formatPrefsOf(p: CompanyProfile): FormatPrefs {
     currencyDisplay: p.currencyDisplay || DEFAULT_FORMAT_PREFS.currencyDisplay,
     dateFormat: p.dateFormat || DEFAULT_FORMAT_PREFS.dateFormat,
     numberFormat: p.numberFormat || DEFAULT_FORMAT_PREFS.numberFormat,
+  };
+}
+
+/** True when auto-numbering is switched on (a prefix has been set). */
+export function hasInvoiceNumbering(p: CompanyProfile): boolean {
+  return p.invoicePrefix.trim() !== "";
+}
+
+/** Coerces a stored value into a safe positive integer, `fallback` otherwise. */
+function toInt(value: unknown, fallback: number, min = 0): number {
+  const n = Math.floor(Number(value));
+  return Number.isFinite(n) && n >= min ? n : fallback;
+}
+
+/**
+ * Renders invoice number `n` under a profile's prefix + padding rules, e.g.
+ * `{ invoicePrefix: "INV-", numberPadding: 3 }` and `7` → `"INV-007"`.
+ */
+export function formatInvoiceNumber(p: CompanyProfile, n: number): string {
+  const digits = String(Math.max(1, Math.floor(n) || 1));
+  const padded = p.numberPadding > 0 ? digits.padStart(p.numberPadding, "0") : digits;
+  return `${p.invoicePrefix}${padded}`;
+}
+
+/**
+ * Hands out the next invoice number and returns it alongside a profile whose
+ * counter has been advanced by one. The caller is responsible for persisting
+ * the returned profile. Only call this when starting a genuinely new invoice.
+ */
+export function generateNextInvoiceNumber(p: CompanyProfile): {
+  number: string;
+  profile: CompanyProfile;
+} {
+  const n = Math.max(1, Math.floor(p.nextInvoiceNumber) || 1);
+  return {
+    number: formatInvoiceNumber(p, n),
+    profile: { ...p, nextInvoiceNumber: n + 1 },
   };
 }
 
@@ -92,7 +146,11 @@ export function loadCompanyProfile(): CompanyProfile | null {
   if (!stored) return null;
   try {
     const parsed = JSON.parse(stored) as Partial<CompanyProfile>;
-    return { ...emptyCompanyProfile, ...parsed };
+    const merged = { ...emptyCompanyProfile, ...parsed };
+    // Numeric fields may arrive as strings / NaN from older or hand-edited data.
+    merged.nextInvoiceNumber = toInt(merged.nextInvoiceNumber, 1, 1);
+    merged.numberPadding = toInt(merged.numberPadding, 0, 0);
+    return merged;
   } catch {
     return null;
   }

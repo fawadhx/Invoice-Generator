@@ -7,6 +7,8 @@ import {
   applyCompanyProfile,
   emptyCompanyProfile,
   formatPrefsOf,
+  generateNextInvoiceNumber,
+  hasInvoiceNumbering,
   loadCompanyProfile,
   saveCompanyProfile,
   type CompanyProfile,
@@ -54,19 +56,32 @@ export function InvoiceEditor() {
     // Start from the last saved invoice (if any)…
     let base = initial;
     const stored = localStorage.getItem("rapidai-invoice");
+    let hadStoredInvoice = false;
     if (stored) {
       try {
         base = { ...base, ...JSON.parse(stored) } as Invoice;
+        hadStoredInvoice = true;
       } catch {
         /* ignore corrupt data */
       }
     }
     // …then let the saved Company Profile fill any field still left blank.
+    let activeProfile = emptyCompanyProfile;
     const savedProfile = loadCompanyProfile();
     if (savedProfile) {
-      setProfile(savedProfile);
+      activeProfile = savedProfile;
       base = applyCompanyProfile(base, savedProfile);
     }
+    // A genuinely fresh start (no invoice in storage) gets the next
+    // auto-generated number when numbering is configured; the counter is then
+    // advanced and persisted. A restored in-progress invoice keeps its number.
+    if (!hadStoredInvoice && hasInvoiceNumbering(activeProfile)) {
+      const { number, profile: advanced } = generateNextInvoiceNumber(activeProfile);
+      base = { ...base, invoiceNo: number };
+      activeProfile = advanced;
+      saveCompanyProfile(advanced);
+    }
+    setProfile(activeProfile);
     setInv(base);
   }, []);
   useEffect(() => {
@@ -135,7 +150,16 @@ export function InvoiceEditor() {
       selectedTemplate: inv.selectedTemplate,
       items: [{ id: Date.now(), name: "", qty: 1, rate: 0 }],
     };
-    setInv(applyCompanyProfile(blank, profile));
+    let next = applyCompanyProfile(blank, profile);
+    // Clearing an invoice means starting a fresh one — hand out (and advance to)
+    // the next number, exactly like a first load with no saved invoice.
+    if (hasInvoiceNumbering(profile)) {
+      const { number, profile: advanced } = generateNextInvoiceNumber(profile);
+      next = { ...next, invoiceNo: number };
+      saveCompanyProfile(advanced);
+      setProfile(advanced);
+    }
+    setInv(next);
   };
 
   const handleDownload = async () => {
