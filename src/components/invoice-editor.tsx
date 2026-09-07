@@ -1,25 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { Download, Plus, Trash2, Upload } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Download, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-type Item = { id: number; name: string; qty: number; rate: number };
-type Invoice = {
-  logo?: string;
-  business: string;
-  from: string;
-  to: string;
-  shipTo: string;
-  invoiceNo: string;
-  date: string;
-  dueDate: string;
-  terms: string;
-  items: Item[];
-  taxPercent: number;
-  discount: number;
-  amountPaid: number;
-  notes: string;
-  currency: string;
-};
+import {
+  computeTotals,
+  formatInvoiceMoney,
+  type Invoice,
+  type InvoiceItem as Item,
+} from "@/lib/invoice";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const today = new Date();
@@ -43,16 +30,15 @@ const initial: Invoice = {
   currency: "USD",
 };
 
-const money = (v: number, currency: string) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-    Number.isFinite(v) ? v : 0,
-  );
+const money = formatInvoiceMoney;
 
 const cell =
   "w-full rounded-sm border border-transparent bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground hover:border-border focus:border-primary focus:bg-card";
 
 export function InvoiceEditor() {
   const [inv, setInv] = useState<Invoice>(initial);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -86,10 +72,26 @@ export function InvoiceEditor() {
     reader.readAsDataURL(file);
   };
 
-  const subtotal = inv.items.reduce((s, i) => s + i.qty * i.rate, 0);
-  const tax = subtotal * (inv.taxPercent / 100);
-  const total = subtotal + tax - inv.discount;
-  const balance = total - inv.amountPaid;
+  // Balance due is always derived — Total − Amount paid — and is never stored
+  // as its own editable value. Recomputed whenever any line item, tax,
+  // discount or amount paid changes. If the client overpays, the balance
+  // shows as a negative "credit" amount.
+  const totals = useMemo(() => computeTotals(inv), [inv]);
+  const { subtotal, tax, total, balance } = totals;
+
+  const handleDownload = async () => {
+    setDownloadError(null);
+    setDownloading(true);
+    try {
+      const { generateInvoicePdf } = await import("@/lib/invoice-pdf");
+      await generateInvoicePdf(inv, totals);
+    } catch (err) {
+      console.error("Invoice PDF generation failed", err);
+      setDownloadError("Could not generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <>
@@ -348,9 +350,22 @@ export function InvoiceEditor() {
         </article>
 
         <aside className="w-full shrink-0 space-y-4 lg:sticky lg:top-6 lg:w-60 lg:self-start print:hidden">
-          <Button size="lg" className="w-full" onClick={() => window.print()}>
-            <Download /> Download Invoice
+          <Button size="lg" className="w-full" onClick={handleDownload} disabled={downloading}>
+            {downloading ? (
+              <>
+                <Loader2 className="animate-spin" /> Preparing PDF…
+              </>
+            ) : (
+              <>
+                <Download /> Download Invoice
+              </>
+            )}
           </Button>
+          {downloadError && (
+            <p className="text-xs leading-5 text-destructive" role="alert">
+              {downloadError}
+            </p>
+          )}
           <div className="space-y-2 rounded-sm border border-border bg-card p-4">
             <Button
               variant="ghost"

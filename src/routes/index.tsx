@@ -15,7 +15,7 @@ const FAQ = [
   },
   {
     q: "How do I download my invoice as a PDF?",
-    a: 'Click "Download Invoice". Your browser\'s print dialog opens — choose "Save as PDF" as the destination to save a clean, professional invoice PDF you can email to your client.',
+    a: 'Click "Download Invoice". The invoice is generated as a clean, professional PDF and downloads straight to your device — no print dialog — ready to email to your client.',
   },
   {
     q: "Can I add my company logo and choose a currency?",
@@ -38,7 +38,7 @@ const GUIDE_FAQ = [
   },
   {
     q: "What is included in an invoice?",
-    a: 'A complete invoice includes the word "Invoice", a unique invoice number, the issue date and due date, the seller\'s name, address and contact details, the client\'s name and address, an itemised list of goods or services with quantity and rate, the subtotal, any tax or discount, the total amount due, and accepted payment methods.',
+    a: "A complete invoice includes the word \"Invoice\", a unique invoice number, the issue date and due date, the seller's name, address and contact details, the client's name and address, an itemised list of goods or services with quantity and rate, the subtotal, any tax or discount, the total amount due, and accepted payment methods.",
   },
   {
     q: "How do I create an invoice?",
@@ -46,7 +46,7 @@ const GUIDE_FAQ = [
   },
   {
     q: "How do I make an invoice for free?",
-    a: "Open this free invoice maker, type in your business and client details, add your line items, then click Download Invoice and choose Save as PDF. There is no signup, no watermark and no limit on how many invoices you make.",
+    a: "Open this free invoice maker, type in your business and client details, add your line items, then click Download Invoice to save the finished PDF. There is no signup, no watermark and no limit on how many invoices you make.",
   },
   {
     q: "Is an invoice a bill or a receipt?",
@@ -240,7 +240,7 @@ const jsonLd = {
         {
           "@type": "HowToStep",
           name: "Download the PDF",
-          text: "Click Download Invoice and save as PDF, then send it to your client.",
+          text: "Click Download Invoice to save the finished PDF, then send it to your client.",
         },
       ],
     },
@@ -288,180 +288,180 @@ function Index() {
       <SiteHeader />
 
       <main>
-      <section className="border-b border-border bg-card print:hidden">
-        <div className="mx-auto max-w-5xl px-4 py-10 text-center lg:px-6">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Free Invoice Generator — make an invoice online in seconds
-          </h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-            A free online invoice maker with no signup and no accounting software. Fill in the
-            invoice below, add your logo, and download a professional PDF.
-          </p>
-          <nav
-            aria-label="Site pages"
-            className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm"
-          >
-            <a href="#invoice-sheet" className="font-medium text-primary hover:underline">
-              Create an invoice
-            </a>
-            <span aria-hidden="true" className="text-border">
-              •
-            </span>
-            <Link to="/about" className="text-muted-foreground hover:text-foreground">
-              About Us
-            </Link>
-            <Link to="/contact" className="text-muted-foreground hover:text-foreground">
-              Contact Us
-            </Link>
-            <Link to="/privacy" className="text-muted-foreground hover:text-foreground">
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className="text-muted-foreground hover:text-foreground">
-              Terms &amp; Conditions
-            </Link>
-          </nav>
-        </div>
-      </section>
-
-      <InvoiceEditor />
-
-      <section
-        className="border-t border-border bg-card print:hidden"
-        aria-labelledby="about-heading"
-      >
-        <div className="mx-auto max-w-3xl space-y-10 px-4 py-14 lg:px-6">
-          <div className="space-y-4">
-            <h2 id="about-heading" className="text-xl font-semibold tracking-tight">
-              The free invoice generator built for speed
-            </h2>
-            <p className="text-sm leading-6 text-muted-foreground">
-              This <strong>invoice generator</strong> helps freelancers, contractors, small
-              businesses and solopreneurs send a clean, professional invoice without the weight of
-              traditional accounting software. It is a genuinely{" "}
-              <strong>free invoice generator</strong> — there is no paywall, no trial timer and no
-              watermark stamped across your PDF. Because the whole tool runs in your browser, you
-              can go from a blank page to a finished invoice in under a minute.
+        <section className="border-b border-border bg-card print:hidden">
+          <div className="mx-auto max-w-5xl px-4 py-10 text-center lg:px-6">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Free Invoice Generator — make an invoice online in seconds
+            </h1>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+              A free online invoice maker with no signup and no accounting software. Fill in the
+              invoice below, add your logo, and download a professional PDF.
             </p>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Most people looking for an <strong>online invoice generator</strong> just want to bill
-              a client and get paid. That is exactly what this{" "}
-              <strong>free online invoice generator</strong> is designed for. Type your business
-              name, upload a logo, add your client, list the work you did, and the subtotal, tax,
-              discount and balance due are calculated for you automatically as you type.
-            </p>
+            <nav
+              aria-label="Site pages"
+              className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm"
+            >
+              <a href="#invoice-sheet" className="font-medium text-primary hover:underline">
+                Create an invoice
+              </a>
+              <span aria-hidden="true" className="text-border">
+                •
+              </span>
+              <Link to="/about" className="text-muted-foreground hover:text-foreground">
+                About Us
+              </Link>
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground">
+                Contact Us
+              </Link>
+              <Link to="/privacy" className="text-muted-foreground hover:text-foreground">
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="text-muted-foreground hover:text-foreground">
+                Terms &amp; Conditions
+              </Link>
+            </nav>
           </div>
+        </section>
 
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">
-              Why use this free invoice maker?
-            </h2>
-            <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
-              <li>
-                <strong>Free invoice maker with no signup</strong> — start immediately, no account
-                or email required.
-              </li>
-              <li>
-                <strong>Invoice maker free of watermarks</strong> — your PDF shows your brand, not
-                ours.
-              </li>
-              <li>
-                <strong>Best free invoice maker for speed</strong> — a single page, no dashboards,
-                no menus to learn.
-              </li>
-              <li>
-                <strong>Online invoice maker</strong> that works on desktop, laptop, tablet and
-                phone.
-              </li>
-              <li>Multi-currency support: USD, EUR, GBP, CAD, AUD, PKR and INR.</li>
-              <li>
-                Automatic totals for quantity, rate, tax percentage, discount and amount paid.
-              </li>
-              <li>Private by design — your details are saved only in your own browser.</li>
-            </ul>
-          </div>
+        <InvoiceEditor />
 
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">
-              How to create an invoice online
-            </h2>
-            <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
-              <li>
-                Add your business name and logo, then fill in your &ldquo;Bill from&rdquo; address
-                and email.
-              </li>
-              <li>
-                Enter the client under &ldquo;Bill to&rdquo;, plus a shipping address if you need
-                one.
-              </li>
-              <li>
-                Add each line item with a description, quantity and rate — the amount is worked out
-                for you.
-              </li>
-              <li>
-                Set the invoice number, date, payment terms and due date, then add tax, discount or
-                amount paid.
-              </li>
-              <li>
-                Click <strong>Download Invoice</strong> and choose &ldquo;Save as PDF&rdquo; to send
-                a <strong>quick invoice</strong> to your client.
-              </li>
-            </ol>
-          </div>
+        <section
+          className="border-t border-border bg-card print:hidden"
+          aria-labelledby="about-heading"
+        >
+          <div className="mx-auto max-w-3xl space-y-10 px-4 py-14 lg:px-6">
+            <div className="space-y-4">
+              <h2 id="about-heading" className="text-xl font-semibold tracking-tight">
+                The free invoice generator built for speed
+              </h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                This <strong>invoice generator</strong> helps freelancers, contractors, small
+                businesses and solopreneurs send a clean, professional invoice without the weight of
+                traditional accounting software. It is a genuinely{" "}
+                <strong>free invoice generator</strong> — there is no paywall, no trial timer and no
+                watermark stamped across your PDF. Because the whole tool runs in your browser, you
+                can go from a blank page to a finished invoice in under a minute.
+              </p>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Most people looking for an <strong>online invoice generator</strong> just want to
+                bill a client and get paid. That is exactly what this{" "}
+                <strong>free online invoice generator</strong> is designed for. Type your business
+                name, upload a logo, add your client, list the work you did, and the subtotal, tax,
+                discount and balance due are calculated for you automatically as you type.
+              </p>
+            </div>
 
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">
-              A free invoice template you can reuse
-            </h2>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Every invoice you build here doubles as a reusable{" "}
-              <strong>free invoice template</strong>. Your last invoice is stored locally, so the
-              next time you need to bill someone you can reopen this page, swap the client and line
-              items, and export a new PDF in seconds. There is nothing to download or install and no{" "}
-              <strong>invoice template</strong> file to manage — the template is the tool. If you
-              prefer a dedicated <strong>free invoice maker app</strong> experience, you can also
-              add this page to your home screen and it will open like an app.
-            </p>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Whether you call it an <strong>invoice generator</strong>, an{" "}
-              <strong>invoice maker free</strong> tool, or a{" "}
-              <strong>free online invoice maker</strong>, the goal is the same: a professional
-              invoice, ready to send, with as little friction as possible.
-            </p>
-          </div>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">
+                Why use this free invoice maker?
+              </h2>
+              <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+                <li>
+                  <strong>Free invoice maker with no signup</strong> — start immediately, no account
+                  or email required.
+                </li>
+                <li>
+                  <strong>Invoice maker free of watermarks</strong> — your PDF shows your brand, not
+                  ours.
+                </li>
+                <li>
+                  <strong>Best free invoice maker for speed</strong> — a single page, no dashboards,
+                  no menus to learn.
+                </li>
+                <li>
+                  <strong>Online invoice maker</strong> that works on desktop, laptop, tablet and
+                  phone.
+                </li>
+                <li>Multi-currency support: USD, EUR, GBP, CAD, AUD, PKR and INR.</li>
+                <li>
+                  Automatic totals for quantity, rate, tax percentage, discount and amount paid.
+                </li>
+                <li>Private by design — your details are saved only in your own browser.</li>
+              </ul>
+            </div>
 
-          <div className="space-y-4">
-            <h2 id="faq" className="text-xl font-semibold tracking-tight">
-              Frequently asked questions
-            </h2>
-            <dl className="space-y-4">
-              {FAQ.map((item) => (
-                <div key={item.q} className="rounded-md border border-border p-4">
-                  <dt className="text-sm font-medium">{item.q}</dt>
-                  <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.a}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">
+                How to create an invoice online
+              </h2>
+              <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+                <li>
+                  Add your business name and logo, then fill in your &ldquo;Bill from&rdquo; address
+                  and email.
+                </li>
+                <li>
+                  Enter the client under &ldquo;Bill to&rdquo;, plus a shipping address if you need
+                  one.
+                </li>
+                <li>
+                  Add each line item with a description, quantity and rate — the amount is worked
+                  out for you.
+                </li>
+                <li>
+                  Set the invoice number, date, payment terms and due date, then add tax, discount
+                  or amount paid.
+                </li>
+                <li>
+                  Click <strong>Download Invoice</strong> to save the finished PDF and send a{" "}
+                  <strong>quick invoice</strong> to your client.
+                </li>
+              </ol>
+            </div>
 
-          <div className="space-y-4">
-            <h2 id="invoice-faq" className="text-xl font-semibold tracking-tight">
-              Invoicing FAQ: how invoices work
-            </h2>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Common questions about what an invoice is, what to put on it, and how to send it and
-              get paid — plus how this <strong>free invoice generator</strong> fits in.
-            </p>
-            <dl className="space-y-4">
-              {GUIDE_FAQ.map((item) => (
-                <div key={item.q} className="rounded-md border border-border p-4">
-                  <dt className="text-sm font-medium">{item.q}</dt>
-                  <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.a}</dd>
-                </div>
-              ))}
-            </dl>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold tracking-tight">
+                A free invoice template you can reuse
+              </h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Every invoice you build here doubles as a reusable{" "}
+                <strong>free invoice template</strong>. Your last invoice is stored locally, so the
+                next time you need to bill someone you can reopen this page, swap the client and
+                line items, and export a new PDF in seconds. There is nothing to download or install
+                and no <strong>invoice template</strong> file to manage — the template is the tool.
+                If you prefer a dedicated <strong>free invoice maker app</strong> experience, you
+                can also add this page to your home screen and it will open like an app.
+              </p>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Whether you call it an <strong>invoice generator</strong>, an{" "}
+                <strong>invoice maker free</strong> tool, or a{" "}
+                <strong>free online invoice maker</strong>, the goal is the same: a professional
+                invoice, ready to send, with as little friction as possible.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 id="faq" className="text-xl font-semibold tracking-tight">
+                Frequently asked questions
+              </h2>
+              <dl className="space-y-4">
+                {FAQ.map((item) => (
+                  <div key={item.q} className="rounded-md border border-border p-4">
+                    <dt className="text-sm font-medium">{item.q}</dt>
+                    <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.a}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <div className="space-y-4">
+              <h2 id="invoice-faq" className="text-xl font-semibold tracking-tight">
+                Invoicing FAQ: how invoices work
+              </h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Common questions about what an invoice is, what to put on it, and how to send it and
+                get paid — plus how this <strong>free invoice generator</strong> fits in.
+              </p>
+              <dl className="space-y-4">
+                {GUIDE_FAQ.map((item) => (
+                  <div key={item.q} className="rounded-md border border-border p-4">
+                    <dt className="text-sm font-medium">{item.q}</dt>
+                    <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.a}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       </main>
 
       <SiteFooter />
