@@ -144,7 +144,7 @@ export function InvoiceDocument({
             {(!preview || inv.invoiceNo.trim()) && (
               <HeaderMeta label="Invoice #" labelClassName={t.label}>
                 {preview ? (
-                  <span className="text-sm text-foreground">{inv.invoiceNo}</span>
+                  <span className={cn(previewText, "text-right")}>{inv.invoiceNo}</span>
                 ) : (
                   <input
                     aria-label="Invoice number"
