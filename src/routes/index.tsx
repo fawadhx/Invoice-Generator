@@ -254,7 +254,7 @@ const jsonLd = {
         {
           "@type": "HowToStep",
           name: "Add your business details",
-          text: "Enter your business name, upload your logo and fill in the 'Bill from' details.",
+          text: "Enter your business name, upload your logo and add your address, phone and email.",
         },
         {
           "@type": "HowToStep",
@@ -418,8 +418,8 @@ function Index() {
               </h2>
               <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
                 <li>
-                  Add your business name and logo, then fill in your &ldquo;Bill from&rdquo; address
-                  and email.
+                  Add your business name and logo, then your address, phone and email in
+                  &ldquo;Edit business details&rdquo;.
                 </li>
                 <li>
                   Enter the client under &ldquo;Bill to&rdquo;, plus a shipping address if you need
@@ -430,8 +430,7 @@ function Index() {
                   out for you.
                 </li>
                 <li>
-                  Set the invoice number, date, payment terms and due date, then add tax, discount
-                  or amount paid.
+                  Set the invoice number, date and due date, then add tax, discount or amount paid.
                 </li>
                 <li>
                   Click <strong>Download Invoice</strong> to save the finished PDF and send a{" "}

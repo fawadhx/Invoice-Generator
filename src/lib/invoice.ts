@@ -7,15 +7,26 @@ export type Invoice = {
    * retained only so older invoices persisted in localStorage still parse.
    */
   logo?: string;
-  business: string;
   /**
-   * Business address, shown under the business name in the header (on screen
-   * and in the PDF). Auto-filled from the saved Company Profile on a blank
-   * invoice; editable inline without writing back to the profile.
+   * @deprecated The business identity block (name, address, phone, email) is
+   * now read straight from the saved Company Profile by the document and the
+   * PDF — see `businessName` / `businessAddress` / `businessPhone` /
+   * `businessEmail` in the template props. This field is retained only as a
+   * fallback for invoices persisted before that change, and so older stored
+   * data still parses.
    */
+  business: string;
+  /** @deprecated See `business` — now sourced from the Company Profile. */
   address: string;
-  from: string;
-  fromPhone: string;
+  /**
+   * @deprecated The "Bill from" section was removed once the sender's details
+   * moved into the header (sourced from the Company Profile). Retained so
+   * older invoices in localStorage still parse and their phone can be used as
+   * a fallback.
+   */
+  from?: string;
+  /** @deprecated See `from`. */
+  fromPhone?: string;
   to: string;
   toPhone: string;
   shipTo: string;
@@ -40,7 +51,6 @@ export type Invoice = {
   invoiceNoCounterAdvanced: boolean;
   date: string;
   dueDate: string;
-  terms: string;
   items: InvoiceItem[];
   taxPercent: number;
   discount: number;

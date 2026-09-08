@@ -23,6 +23,10 @@ export async function renderInvoicePdf(
     money,
     date,
     logoUrl,
+    businessName,
+    businessAddress,
+    businessPhone,
+    businessEmail,
     signatureUrl,
     banking,
     imageAsPng,
@@ -37,7 +41,9 @@ export async function renderInvoicePdf(
     else doc.setTextColor(130);
   };
 
-  // ---- Header: logo + business name (left) ----
+  // ---- Header: sender identity (left) ----
+  // Logo, then business name, address, phone and email stacked beneath it —
+  // all read from the saved Company Profile. Mirrors the on-screen masthead.
   let leftY = MARGIN;
   if (logoUrl) {
     const logo = await imageAsPng(logoUrl);
@@ -53,21 +59,23 @@ export async function renderInvoicePdf(
       }
     }
   }
-  if (inv.business.trim()) {
+  const idWidth = pageWidth / 2 - MARGIN;
+  if (businessName.trim()) {
     doc.setFont(heading, "bold");
     doc.setFontSize(16);
     doc.setTextColor(20);
-    const lines = doc.splitTextToSize(inv.business.trim(), pageWidth / 2 - MARGIN);
+    const lines = doc.splitTextToSize(businessName.trim(), idWidth);
     doc.text(lines, MARGIN, leftY + 12);
     leftY += lines.length * 18 + 4;
   }
-  if (inv.address.trim()) {
+  for (const value of [businessAddress, businessPhone, businessEmail]) {
+    if (!value.trim()) continue;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(110);
-    const lines = doc.splitTextToSize(inv.address.trim(), pageWidth / 2 - MARGIN);
+    const lines = doc.splitTextToSize(value.trim(), idWidth);
     doc.text(lines, MARGIN, leftY + 11);
-    leftY += lines.length * 11 + 4;
+    leftY += lines.length * 11 + 3;
   }
 
   // ---- Header: INVOICE (right) ----
@@ -96,7 +104,6 @@ export async function renderInvoicePdf(
   const meta: Array<[string, string]> = [
     ["Invoice #", inv.invoiceNo || "—"],
     ["Date", date(inv.date) || "—"],
-    ["Payment terms", inv.terms || "—"],
     ["Due date", date(inv.dueDate) || "—"],
   ];
   doc.setFontSize(10);
@@ -111,31 +118,34 @@ export async function renderInvoicePdf(
     metaY += 15;
   }
 
-  let cursorY = Math.max(leftY, metaY) + 18;
+  // ---- Header divider ----
+  // Full-width rule separating the sender masthead from the invoice body,
+  // matching the on-screen `<hr>`.
+  const dividerY = Math.max(leftY, metaY) + 16;
+  doc.setDrawColor(210);
+  doc.setLineWidth(0.75);
+  doc.line(MARGIN, dividerY, right, dividerY);
+
+  let cursorY = dividerY + 26;
 
   // ---- Parties ----
+  // Only "Bill to" now — the sender's own details moved into the masthead.
   const colGap = 20;
   const colW = (pageWidth - MARGIN * 2 - colGap) / 2;
   let partyY = cursorY;
   doc.setFontSize(9);
   const partyBlock = (body: string, phone: string) =>
     [body.trim(), phone.trim() && `Phone: ${phone.trim()}`].filter(Boolean).join("\n") || "—";
-  (
-    [
-      ["Bill from", partyBlock(inv.from, inv.fromPhone)],
-      ["Bill to", partyBlock(inv.to, inv.toPhone)],
-    ] as Array<[string, string]>
-  ).forEach(([label, value], idx) => {
-    const x = MARGIN + idx * (colW + colGap);
+  {
     doc.setFont(heading, "bold");
     setLabelColor();
-    doc.text(label.toUpperCase(), x, cursorY);
+    doc.text("BILL TO", MARGIN, cursorY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(40);
-    const lines = doc.splitTextToSize(value.trim() || "—", colW);
-    doc.text(lines, x, cursorY + 13);
+    const lines = doc.splitTextToSize(partyBlock(inv.to, inv.toPhone), colW);
+    doc.text(lines, MARGIN, cursorY + 13);
     partyY = Math.max(partyY, cursorY + 13 + lines.length * 11);
-  });
+  }
 
   if (inv.shipTo.trim()) {
     partyY += 12;
@@ -241,7 +251,9 @@ export async function renderInvoicePdf(
       const w = sig.width * ratio;
       const h = sig.height * ratio;
       const blockLeft = right - maxW;
-      const nameLines = inv.business.trim() ? doc.splitTextToSize(inv.business.trim(), maxW) : [];
+      const nameLines = businessName.trim()
+        ? doc.splitTextToSize(businessName.trim(), maxW)
+        : [];
       const blockH = h + 6 + nameLines.length * 12 + 14;
       let sy = y + 26;
       if (sy + blockH > pageHeight - MARGIN) {

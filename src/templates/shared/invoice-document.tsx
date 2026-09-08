@@ -40,6 +40,10 @@ export function InvoiceDocument({
   formatMoney: money,
   formatDate: fmtDate,
   logoUrl,
+  businessName,
+  businessAddress,
+  businessPhone,
+  businessEmail,
   signatureUrl,
   banking,
   preview,
@@ -63,15 +67,17 @@ export function InvoiceDocument({
     // belongs to the one editable document. The preview copy renders inside a
     // modal alongside it, so it must not duplicate the id.
     <article id={preview ? undefined : "invoice-sheet"} className={t.sheet}>
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      {/*
+       * Header — a traditional invoice masthead. Top-left: the sender's
+       * identity (logo, name, address, phone, email), all read-only and read
+       * straight from the saved Company Profile; editing lives in the
+       * "Edit business details" overlay. Top-right: the "INVOICE" heading and
+       * this invoice's own meta (number, date, due date). A full-width rule
+       * separates the masthead from the body. On mobile the two blocks stack,
+       * left then right.
+       */}
+      <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
         <div className="min-w-0 flex-1">
-          {/*
-           * Logo — display only. It comes from the saved Company Profile;
-           * uploading / changing it lives in the "Edit business details"
-           * overlay. When none is saved a muted placeholder stands in (the
-           * same way the business-name / address prompts do), and it is
-           * hidden entirely in preview and print.
-           */}
           {logoUrl ? (
             <img
               src={logoUrl}
@@ -83,109 +89,110 @@ export function InvoiceDocument({
               Add a logo from “Edit business details”
             </div>
           )}
-          {/*
-           * Business name and address are read-only here — they are edited
-           * only through the Company Details overlay (the pencil button). The
-           * text keeps the same position and typography the old inline inputs
-           * had; when nothing is saved yet a muted prompt stands in (except in
-           * preview, where a blank field simply renders nothing).
-           */}
-          <div className="flex items-start gap-3">
-            <div className="min-w-0">
-              {inv.business.trim() ? (
-                <p
-                  className={cn(
-                    "break-words text-lg font-semibold text-foreground",
-                    t.headingFont,
-                  )}
-                >
-                  {inv.business}
-                </p>
-              ) : preview ? null : (
-                <p
-                  className={cn(
-                    "text-lg font-semibold italic text-muted-foreground/60 print:hidden",
-                    t.headingFont,
-                  )}
-                >
-                  Your business name
-                </p>
-              )}
-              {inv.address.trim() ? (
-                <p className="mt-2 whitespace-pre-line break-words text-sm text-muted-foreground">
-                  {inv.address}
-                </p>
-              ) : preview ? null : (
-                <p className="mt-2 text-sm italic text-muted-foreground/60 print:hidden">
-                  Add your business address from the edit button →
-                </p>
-              )}
-            </div>
-            {!preview && (
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={onEditProfile}
-                aria-label="Edit business details"
-                title="Edit business details"
-                className="shrink-0 print:hidden"
+
+          <div className="min-w-0 space-y-1">
+            {businessName.trim() ? (
+              <p className={cn("break-words text-lg font-semibold text-foreground", t.headingFont)}>
+                {businessName}
+              </p>
+            ) : preview ? null : (
+              <p
+                className={cn(
+                  "text-lg font-semibold italic text-muted-foreground/60 print:hidden",
+                  t.headingFont,
+                )}
               >
-                <Pencil className="h-4 w-4" />
-              </Button>
+                Your business name
+              </p>
+            )}
+            {businessAddress.trim() ? (
+              <p className="whitespace-pre-line break-words text-sm text-muted-foreground">
+                {businessAddress}
+              </p>
+            ) : preview ? null : (
+              <p className="text-sm italic text-muted-foreground/60 print:hidden">
+                Add your business address from “Edit business details”
+              </p>
+            )}
+            {businessPhone.trim() && (
+              <p className="break-words text-sm text-muted-foreground">{businessPhone}</p>
+            )}
+            {businessEmail.trim() && (
+              <p className="break-all text-sm text-muted-foreground">{businessEmail}</p>
             )}
           </div>
+
+          {!preview && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onEditProfile}
+              title="Edit business details"
+              className="mt-3 border-primary/50 bg-primary/5 font-semibold text-foreground hover:bg-primary/10 hover:text-foreground print:hidden"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit business details
+            </Button>
+          )}
         </div>
-        <div className="w-full sm:w-64">
+
+        <div className="w-full shrink-0 sm:w-64">
           <div className={t.invoiceTitleWrap}>
             <span className={t.invoiceTitleText}>INVOICE</span>
           </div>
-          {(!preview || inv.invoiceNo.trim()) && (
-            <div className="flex items-center justify-center gap-1 sm:justify-end">
-              <span className="text-xs font-medium text-muted-foreground">#</span>
-              {preview ? (
-                <span className="text-right text-sm text-foreground">{inv.invoiceNo}</span>
-              ) : (
-                <input
-                  style={{ fieldSizing: "content" }}
-                  className={`${cell} w-auto min-w-8 text-right`}
-                  value={inv.invoiceNo}
-                  // Typing here means the user has taken over the number for
-                  // this invoice — stop auto-numbering from re-issuing it.
-                  onChange={(e) =>
-                    patch({ invoiceNo: e.target.value, invoiceNoAutoGenerated: false })
-                  }
+          <div className="mt-3 space-y-1.5">
+            {(!preview || inv.invoiceNo.trim()) && (
+              <HeaderMeta label="Invoice #" labelClassName={t.label}>
+                {preview ? (
+                  <span className="text-sm text-foreground">{inv.invoiceNo}</span>
+                ) : (
+                  <input
+                    aria-label="Invoice number"
+                    className={`${cell} w-full text-right`}
+                    value={inv.invoiceNo}
+                    // Typing here means the user has taken over the number for
+                    // this invoice — stop auto-numbering from re-issuing it.
+                    onChange={(e) =>
+                      patch({ invoiceNo: e.target.value, invoiceNoAutoGenerated: false })
+                    }
+                  />
+                )}
+              </HeaderMeta>
+            )}
+            {(!preview || inv.date) && (
+              <HeaderMeta label="Date" labelClassName={t.label}>
+                <Field
+                  preview={preview}
+                  type="date"
+                  className="w-full text-right"
+                  previewClassName="text-right"
+                  value={inv.date}
+                  displayValue={fmtDate(inv.date)}
+                  onChange={(v) => patch({ date: v })}
                 />
-              )}
-            </div>
-          )}
+              </HeaderMeta>
+            )}
+            {(!preview || inv.dueDate) && (
+              <HeaderMeta label="Due date" labelClassName={t.label}>
+                <Field
+                  preview={preview}
+                  type="date"
+                  className="w-full text-right"
+                  previewClassName="text-right"
+                  value={inv.dueDate}
+                  displayValue={fmtDate(inv.dueDate)}
+                  onChange={(v) => patch({ dueDate: v })}
+                />
+              </HeaderMeta>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
+
+      <hr className="mt-6 border-border" />
 
       <div className={cn(t.partiesTop, "grid gap-6 sm:grid-cols-2")}>
         <div className="space-y-4">
-          {(!preview || inv.from.trim() || inv.fromPhone.trim()) && (
-            <Block label="Bill from" labelClassName={t.label}>
-              <AreaField
-                preview={preview}
-                className="min-h-16"
-                placeholder="Name, address, email"
-                value={inv.from}
-                onChange={(v) => patch({ from: v })}
-              />
-              {(!preview || inv.fromPhone.trim()) && (
-                <Field
-                  preview={preview}
-                  type="tel"
-                  ariaLabel="Your phone number"
-                  className="mt-2"
-                  placeholder="Phone number"
-                  value={inv.fromPhone}
-                  onChange={(v) => patch({ fromPhone: v })}
-                />
-              )}
-            </Block>
-          )}
           {(!preview || inv.to.trim() || inv.toPhone.trim()) && (
             <Block label="Bill to" labelClassName={t.label}>
               <AreaField
@@ -221,43 +228,7 @@ export function InvoiceDocument({
           )}
         </div>
         <div className="space-y-2 sm:pl-6">
-          {(!preview || inv.date) && (
-            <Row label="Date" labelClassName={t.label}>
-              <Field
-                preview={preview}
-                type="date"
-                className="text-right"
-                previewClassName="text-right"
-                value={inv.date}
-                displayValue={fmtDate(inv.date)}
-                onChange={(v) => patch({ date: v })}
-              />
-            </Row>
-          )}
-          {(!preview || inv.terms.trim()) && (
-            <Row label="Payment terms" labelClassName={t.label}>
-              <Field
-                preview={preview}
-                className="text-right"
-                previewClassName="text-right"
-                value={inv.terms}
-                onChange={(v) => patch({ terms: v })}
-              />
-            </Row>
-          )}
-          {(!preview || inv.dueDate) && (
-            <Row label="Due date" labelClassName={t.label}>
-              <Field
-                preview={preview}
-                type="date"
-                className="text-right"
-                previewClassName="text-right"
-                value={inv.dueDate}
-                displayValue={fmtDate(inv.dueDate)}
-                onChange={(v) => patch({ dueDate: v })}
-              />
-            </Row>
-          )}
+          {/* Date / due date now live in the header masthead. */}
           <Row label="Balance due" labelClassName={t.label}>
             {preview ? (
               <span className="block px-2 py-1.5 text-right text-sm font-semibold text-foreground">
@@ -468,9 +439,9 @@ export function InvoiceDocument({
               className="h-16 w-auto max-w-full rounded-sm bg-white object-contain object-left p-1.5"
             />
             <div className="mt-1.5 border-t border-foreground/70 pt-1.5">
-              {inv.business.trim() && (
+              {businessName.trim() && (
                 <p className={cn("text-sm font-semibold text-foreground", t.headingFont)}>
-                  {inv.business}
+                  {businessName}
                 </p>
               )}
               <p className={cn("mt-0.5", t.label)}>Signature</p>
@@ -541,6 +512,28 @@ function Block({
     <div>
       <p className={cn("mb-1", labelClassName)}>{label}</p>
       {children}
+    </div>
+  );
+}
+
+/**
+ * A label + value line in the header masthead's top-right meta stack (invoice
+ * number, date, due date). Label sits left, value right — the value column
+ * takes the remaining width so a native `<input type="date">` still fits.
+ */
+function HeaderMeta({
+  label,
+  labelClassName,
+  children,
+}: {
+  label: string;
+  labelClassName: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[auto_1fr] items-center gap-2">
+      <span className={cn("whitespace-nowrap", labelClassName)}>{label}</span>
+      <div className="min-w-0 text-right">{children}</div>
     </div>
   );
 }

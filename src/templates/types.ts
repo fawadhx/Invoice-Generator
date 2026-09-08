@@ -33,6 +33,17 @@ export type InvoiceTemplateProps = {
    */
   logoUrl: string;
   /**
+   * The sender's business identity, read straight from the saved Company
+   * Profile (never editable on the invoice document itself). Rendered as a
+   * stacked block in the top-left of the header — name, address, phone, email
+   * — above a full-width divider. Blank fields are simply omitted. `""`
+   * everywhere shows only the muted "add your details" prompts in edit mode.
+   */
+  businessName: string;
+  businessAddress: string;
+  businessPhone: string;
+  businessEmail: string;
+  /**
    * When true, the document renders as a clean read-only preview that matches
    * the exported PDF: input borders / hover / focus affordances are gone,
    * every editing-only control (edit pencil, add / remove line item) is
@@ -105,6 +116,16 @@ export type InvoicePdfContext = {
    */
   logoUrl: string;
   /**
+   * The sender's business identity from the saved Company Profile — drawn as a
+   * stacked block under the logo (name, address, phone, email), above a
+   * full-width header divider. Blank fields are omitted. Mirrors the on-screen
+   * header.
+   */
+  businessName: string;
+  businessAddress: string;
+  businessPhone: string;
+  businessEmail: string;
+  /**
    * The saved Company Profile's signature as a data URL, or `""` when none
    * has been set. Drawn near the foot of the invoice (image + business name +
    * "Signature" caption) only when non-empty.
@@ -143,7 +164,7 @@ export type UiTheme = {
   invoiceTitleWrap: string;
   /** The "INVOICE" word itself — size, weight, color. */
   invoiceTitleText: string;
-  /** Section and row labels ("Bill from", "Date", "Subtotal"…). */
+  /** Section and row labels ("Bill to", "Date", "Subtotal"…). */
   label: string;
   /** Top margin before the parties grid. */
   partiesTop: string;

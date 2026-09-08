@@ -290,18 +290,11 @@ export function applyCompanyProfile(inv: Invoice, p: CompanyProfile): Invoice {
   const next = { ...inv };
   // Currency is profile-owned (no per-invoice picker), so it is always synced.
   if (p.currencyCode) next.currency = p.currencyCode;
+  // The business identity block (logo, name, address, phone, email) and the
+  // signature are no longer copied onto the invoice — the document and the PDF
+  // read them straight from the profile. `business` / `address` are still
+  // filled here purely as a fallback for older stored invoices.
   if (!next.business.trim() && p.businessName.trim()) next.business = p.businessName;
-  // The logo is no longer copied onto the invoice — it is read straight from
-  // the profile (`profile.logo`) by the document and the PDF, like the
-  // signature. `Invoice.logo` is kept only for back-compat with stored data.
   if (!next.address.trim() && p.address.trim()) next.address = p.address;
-  if (!next.fromPhone.trim() && p.phone.trim()) next.fromPhone = p.phone;
-  if (!next.from.trim()) {
-    // The "Bill from" free-text block — placeholder "Name, address, email".
-    // Compose it from the structured profile so the sender's address and
-    // email still land on the invoice without adding more rendered fields.
-    const composed = [p.address.trim(), p.email.trim()].filter(Boolean).join("\n");
-    if (composed) next.from = composed;
-  }
   return next;
 }

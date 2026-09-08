@@ -13,6 +13,21 @@ const EMPTY_BANKING: BankingDetails = {
   bankingNote: "",
 };
 
+/** The sender's identity block, sourced from the saved Company Profile. */
+export type PdfSender = {
+  businessName: string;
+  businessAddress: string;
+  businessPhone: string;
+  businessEmail: string;
+};
+
+const EMPTY_SENDER: PdfSender = {
+  businessName: "",
+  businessAddress: "",
+  businessPhone: "",
+  businessEmail: "",
+};
+
 const MARGIN = 40;
 
 function safeFileName(invoiceNo: string): string {
@@ -83,6 +98,10 @@ async function imageAsPng(
  *
  * `logoUrl` is the saved Company Profile's logo (a data URL), or `""` for
  * none — drawn top-left of the header, matching the on-screen document.
+ *
+ * `sender` is the saved Company Profile's business identity (name, address,
+ * phone, email) — drawn stacked under the logo, above the header divider,
+ * matching the on-screen header.
  */
 export async function generateInvoicePdf(
   inv: Invoice,
@@ -91,6 +110,7 @@ export async function generateInvoicePdf(
   signatureUrl = "",
   banking: BankingDetails = EMPTY_BANKING,
   logoUrl = "",
+  sender: PdfSender = EMPTY_SENDER,
 ): Promise<void> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const template = getInvoiceTemplate(inv.selectedTemplate);
@@ -106,6 +126,10 @@ export async function generateInvoicePdf(
     money: (value: number) => formatMoney(value, prefs),
     date: (iso: string) => formatDate(iso, prefs.dateFormat),
     logoUrl,
+    businessName: sender.businessName,
+    businessAddress: sender.businessAddress,
+    businessPhone: sender.businessPhone,
+    businessEmail: sender.businessEmail,
     signatureUrl,
     banking,
     imageAsPng,

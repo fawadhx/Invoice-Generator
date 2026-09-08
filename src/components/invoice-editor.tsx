@@ -36,8 +36,6 @@ due.setDate(today.getDate() + 14);
 const initial: Invoice = {
   business: "",
   address: "",
-  from: "",
-  fromPhone: "",
   to: "",
   toPhone: "",
   shipTo: "",
@@ -46,7 +44,6 @@ const initial: Invoice = {
   invoiceNoCounterAdvanced: false,
   date: iso(today),
   dueDate: iso(due),
-  terms: "Net 14",
   items: [{ id: 1, name: "", qty: 1, rate: 0 }],
   taxPercent: 0,
   discount: 0,
@@ -93,6 +90,10 @@ export function InvoiceEditor() {
         const parsed = JSON.parse(stored) as Partial<Invoice>;
         base = { ...base, ...parsed };
         hadStoredInvoice = true;
+        // Drop fields removed from the model so they don't linger in storage:
+        // `terms` (Payment terms, removed) and the old inline "Bill from" text.
+        delete (base as Record<string, unknown>)["terms"];
+        delete base.from;
         // Migrate invoices persisted before the numbering flags existed: infer
         // whether the number is still scheme-generated, and assume the old flow
         // (which advanced the counter at generation) already consumed its slot.
@@ -185,6 +186,13 @@ export function InvoiceEditor() {
     formatMoney: fmtMoney,
     formatDate: fmtDate,
     logoUrl: profile.logo,
+    // The sender's identity block, read straight from the saved Company
+    // Profile. `business` / `address` fall back to the invoice's own copy so
+    // invoices saved before this became profile-only still show their sender.
+    businessName: profile.businessName || inv.business,
+    businessAddress: profile.address || inv.address,
+    businessPhone: profile.phone || inv.fromPhone || "",
+    businessEmail: profile.email,
     signatureUrl: profile.signatureUrl,
     banking,
   };
@@ -272,7 +280,12 @@ export function InvoiceEditor() {
     setDownloading(true);
     try {
       const { generateInvoicePdf } = await import("@/lib/invoice-pdf");
-      await generateInvoicePdf(inv, totals, prefs, profile.signatureUrl, banking, profile.logo);
+      await generateInvoicePdf(inv, totals, prefs, profile.signatureUrl, banking, profile.logo, {
+        businessName: profile.businessName || inv.business,
+        businessAddress: profile.address || inv.address,
+        businessPhone: profile.phone || inv.fromPhone || "",
+        businessEmail: profile.email,
+      });
       // The invoice has been issued as a PDF. If it carried an auto-generated
       // number from an active saved scheme whose slot has not been consumed
       // yet, advance the counter now so the next invoice gets a fresh number.
