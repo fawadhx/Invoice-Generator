@@ -55,18 +55,32 @@ export function InvoiceDocument({
   const showBankBox = bankRows.length > 0 || banking.bankingNote.trim() !== "";
   const taxPct = Number.isFinite(inv.taxPercent) ? inv.taxPercent : 0;
 
+  // The editing view stacks fields on narrow screens (the `sm:` breakpoints
+  // below) purely for touch-friendly data entry. The Preview modal, by
+  // contrast, must reproduce the exported PDF exactly at *any* viewport width
+  // — it renders inside a fixed-width, horizontally-scrollable surface — so in
+  // preview those breakpoints are forced on regardless of screen size.
+  //
+  // `fx(cls)` emits its classes only in preview; paired with `cn()`'s
+  // tailwind-merge it overrides the conflicting stacked base utilities.
+  // `themed(cls)` does the same for the per-template theme strings, which bake
+  // a couple of `sm:` utilities in directly (sheet padding, INVOICE
+  // alignment). When `preview` is false both are no-ops — the editing view is
+  // byte-for-byte unchanged.
+  const fx = (cls: string) => (preview ? cls : "");
+  const themed = (cls: string) => (preview ? cls.replace(/\bsm:/g, "") : cls);
+
   // In preview mode a blank starter line (no description, nothing billed) is
   // dropped entirely — matching the PDF, which never prints an empty row.
-  const items =
-    preview
-      ? inv.items.filter((i) => i.name.trim() !== "" || i.qty * i.rate !== 0)
-      : inv.items;
+  const items = preview
+    ? inv.items.filter((i) => i.name.trim() !== "" || i.qty * i.rate !== 0)
+    : inv.items;
 
   return (
     // The stable `invoice-sheet` id (print target + the homepage jump link)
     // belongs to the one editable document. The preview copy renders inside a
     // modal alongside it, so it must not duplicate the id.
-    <article id={preview ? undefined : "invoice-sheet"} className={t.sheet}>
+    <article id={preview ? undefined : "invoice-sheet"} className={cn(themed(t.sheet))}>
       {/*
        * Header — a traditional invoice masthead. Top-left: the sender's
        * identity (logo, name, address, phone, email), all read-only and read
@@ -76,7 +90,12 @@ export function InvoiceDocument({
        * separates the masthead from the body. On mobile the two blocks stack,
        * left then right.
        */}
-      <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+      <header
+        className={cn(
+          "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8",
+          fx("flex-row items-start justify-between gap-8"),
+        )}
+      >
         <div className="min-w-0 flex-1">
           {logoUrl ? (
             <img
@@ -136,8 +155,8 @@ export function InvoiceDocument({
           )}
         </div>
 
-        <div className="w-full shrink-0 sm:w-64">
-          <div className={t.invoiceTitleWrap}>
+        <div className={cn("w-full shrink-0 sm:w-64", fx("w-64"))}>
+          <div className={cn(themed(t.invoiceTitleWrap))}>
             <span className={t.invoiceTitleText}>INVOICE</span>
           </div>
           <div className="mt-3 space-y-1.5">
@@ -191,7 +210,7 @@ export function InvoiceDocument({
 
       <hr className="mt-6 border-border" />
 
-      <div className={cn(t.partiesTop, "grid gap-6 sm:grid-cols-2")}>
+      <div className={cn(t.partiesTop, "grid gap-6 sm:grid-cols-2", fx("grid-cols-2"))}>
         <div className="space-y-4">
           {(!preview || inv.to.trim() || inv.toPhone.trim()) && (
             <Block label="Bill to" labelClassName={t.label}>
@@ -227,7 +246,7 @@ export function InvoiceDocument({
             </Block>
           )}
         </div>
-        <div className="space-y-2 sm:pl-6">
+        <div className={cn("space-y-2 sm:pl-6", fx("pl-6"))}>
           {/* Date / due date now live in the header masthead. */}
           <Row label="Balance due" labelClassName={t.label}>
             {preview ? (
@@ -259,7 +278,11 @@ export function InvoiceDocument({
          * "Line item" button are gone.
          */}
         <div
-          className={cn("hidden grid-cols-[1fr_60px_88px_88px_28px] gap-2 sm:grid", t.tableHead)}
+          className={cn(
+            "hidden grid-cols-[1fr_60px_88px_88px_28px] gap-2 sm:grid",
+            t.tableHead,
+            fx("grid"),
+          )}
         >
           <span>Item</span>
           <span className="text-right">Qty</span>
@@ -273,16 +296,20 @@ export function InvoiceDocument({
             className={cn(
               "space-y-2 sm:grid sm:grid-cols-[1fr_60px_88px_88px_28px] sm:items-center sm:gap-2 sm:space-y-0",
               t.itemRow,
+              fx("grid grid-cols-[1fr_60px_88px_88px_28px] items-center gap-2 space-y-0"),
             )}
           >
-            <label className="block sm:contents">
-              <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+            <label className={cn("block sm:contents", fx("contents"))}>
+              <span
+                className={cn(
+                  "mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden",
+                  fx("hidden"),
+                )}
+              >
                 Item
               </span>
               {preview ? (
-                <span className="block px-2 py-1.5 text-sm text-foreground sm:py-0">
-                  {item.name}
-                </span>
+                <span className="block px-2 py-0 text-sm text-foreground">{item.name}</span>
               ) : (
                 <input
                   className={cell}
@@ -292,13 +319,18 @@ export function InvoiceDocument({
                 />
               )}
             </label>
-            <div className="grid grid-cols-2 gap-2 sm:contents">
-              <label className="sm:contents">
-                <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+            <div className={cn("grid grid-cols-2 gap-2 sm:contents", fx("contents"))}>
+              <label className={cn("sm:contents", fx("contents"))}>
+                <span
+                  className={cn(
+                    "mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden",
+                    fx("hidden"),
+                  )}
+                >
                   Qty
                 </span>
                 {preview ? (
-                  <span className="block px-2 py-1.5 text-left text-sm text-foreground sm:py-0 sm:text-right">
+                  <span className="block px-2 py-0 text-right text-sm text-foreground">
                     {item.qty}
                   </span>
                 ) : (
@@ -312,12 +344,17 @@ export function InvoiceDocument({
                   />
                 )}
               </label>
-              <label className="sm:contents">
-                <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+              <label className={cn("sm:contents", fx("contents"))}>
+                <span
+                  className={cn(
+                    "mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden",
+                    fx("hidden"),
+                  )}
+                >
                   Rate
                 </span>
                 {preview ? (
-                  <span className="block px-2 py-1.5 text-left text-sm text-foreground sm:py-0 sm:text-right">
+                  <span className="block px-2 py-0 text-right text-sm text-foreground">
                     {money(item.rate)}
                   </span>
                 ) : (
@@ -331,11 +368,21 @@ export function InvoiceDocument({
                   />
                 )}
               </label>
-              <div className="sm:contents">
-                <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
+              <div className={cn("sm:contents", fx("contents"))}>
+                <span
+                  className={cn(
+                    "mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden",
+                    fx("hidden"),
+                  )}
+                >
                   Amount
                 </span>
-                <span className="block px-2 py-1.5 text-left text-sm sm:py-0 sm:text-right">
+                <span
+                  className={cn(
+                    "block px-2 py-1.5 text-left text-sm sm:py-0 sm:text-right",
+                    fx("py-0 text-right"),
+                  )}
+                >
                   {money(item.qty * item.rate)}
                 </span>
               </div>
@@ -360,7 +407,7 @@ export function InvoiceDocument({
         )}
       </div>
 
-      <div className={cn(t.summaryTop, "grid gap-8 sm:grid-cols-2")}>
+      <div className={cn(t.summaryTop, "grid gap-8 sm:grid-cols-2", fx("grid-cols-2"))}>
         {!preview || inv.notes.trim() ? (
           <Block label="Notes" labelClassName={t.label}>
             <AreaField
@@ -451,7 +498,7 @@ export function InvoiceDocument({
       )}
 
       {showBanking && (
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 print:mt-12">
+        <div className={cn("mt-10 grid gap-4 sm:grid-cols-2 print:mt-12", fx("grid-cols-2"))}>
           {banking.payableTo.trim() && (
             <div className="rounded-sm border border-border p-4">
               <p className={cn("mb-1.5", t.label)}>Payable to</p>

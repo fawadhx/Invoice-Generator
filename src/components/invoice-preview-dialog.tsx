@@ -30,11 +30,17 @@ type Props = {
  * Styling mirrors the other overlays in this app (`company-profile-dialog`,
  * `currency-settings-dialog`): centred, inset from the screen edge on every
  * size, capped at 90vh and scrollable.
+ *
+ * The document itself is rendered at a fixed A4-proportioned width (794px ≈
+ * 210mm at 96dpi) inside a horizontally-scrollable surface, so on a narrow
+ * phone the user pans / pinch-zooms a PDF-accurate layout rather than seeing
+ * the page reflow to fit — the invoice document forces its desktop layout on
+ * in `preview` mode (see `invoice-document.tsx`).
  */
 export function InvoicePreviewDialog({ open, onOpenChange, children }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Invoice preview</DialogTitle>
           <DialogDescription>
@@ -42,7 +48,9 @@ export function InvoicePreviewDialog({ open, onOpenChange, children }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-sm bg-muted/30 p-3 sm:p-4">{children}</div>
+        <div className="min-w-0 overflow-x-auto rounded-sm bg-muted/30 p-3 [touch-action:pan-x_pan-y_pinch-zoom] sm:p-4">
+          <div className="mx-auto w-[794px] max-w-[794px]">{children}</div>
+        </div>
 
         <DialogFooter>
           <DialogClose asChild>
