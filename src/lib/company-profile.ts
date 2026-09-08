@@ -109,6 +109,24 @@ export const emptyCompanyProfile: CompanyProfile = {
   bankingNote: "",
 };
 
+/**
+ * The profile a brand-new user starts from: `emptyCompanyProfile` plus
+ * out-of-the-box invoice-numbering defaults (`INV-` prefix, zero-padded to 5 →
+ * `INV-00001`) so numbering is useful before the user configures anything.
+ * Every field stays fully editable — clearing the prefix returns to manual
+ * numbering, exactly as an empty prefix does today.
+ *
+ * This is deliberately NOT the merge base used by `loadCompanyProfile`: a
+ * previously saved profile (including one from before numbering existed) keeps
+ * its own values and is never retro-fitted with these defaults. It only takes
+ * effect when there is no saved profile at all.
+ */
+export const defaultCompanyProfile: CompanyProfile = {
+  ...emptyCompanyProfile,
+  invoicePrefix: "INV-",
+  numberPadding: 5,
+};
+
 /** Pulls just the formatting preferences out of a profile. */
 export function formatPrefsOf(p: CompanyProfile): FormatPrefs {
   return {

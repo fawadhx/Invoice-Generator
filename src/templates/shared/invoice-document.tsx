@@ -59,7 +59,10 @@ export function InvoiceDocument({
       : inv.items;
 
   return (
-    <article id="invoice-sheet" className={t.sheet}>
+    // The stable `invoice-sheet` id (print target + the homepage jump link)
+    // belongs to the one editable document. The preview copy renders inside a
+    // modal alongside it, so it must not duplicate the id.
+    <article id={preview ? undefined : "invoice-sheet"} className={t.sheet}>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           {/*

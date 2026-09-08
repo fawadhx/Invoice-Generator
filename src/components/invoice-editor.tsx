@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, Loader2, Pencil } from "lucide-react";
+import { Download, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { computeTotals, type Invoice, type InvoiceItem as Item } from "@/lib/invoice";
 import {
   applyCompanyProfile,
   bankingDetailsOf,
-  emptyCompanyProfile,
+  defaultCompanyProfile,
   formatPrefsOf,
   generateNextInvoiceNumber,
   hasInvoiceNumbering,
@@ -17,7 +17,13 @@ import {
 import { formatDate, formatMoney } from "@/lib/locale-format";
 import { CompanyProfileDialog } from "@/components/company-profile-dialog";
 import { CurrencySettingsDialog } from "@/components/currency-settings-dialog";
-import { DEFAULT_TEMPLATE_ID, getInvoiceTemplate, invoiceTemplateList } from "@/templates";
+import { InvoicePreviewDialog } from "@/components/invoice-preview-dialog";
+import {
+  DEFAULT_TEMPLATE_ID,
+  getInvoiceTemplate,
+  invoiceTemplateList,
+  type InvoiceTemplateProps,
+} from "@/templates";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const today = new Date();
@@ -49,13 +55,13 @@ export function InvoiceEditor() {
   const [inv, setInv] = useState<Invoice>(initial);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  // A pure view-state toggle: when true the invoice document renders as a
-  // read-only, chrome-free preview that matches the exported PDF. No invoice
-  // data changes, so toggling back to editing loses nothing.
-  const [preview, setPreview] = useState(false);
+  // The read-only preview lives in a modal over the editing view — opening or
+  // closing it never touches invoice state, so there is no "stuck in preview"
+  // mode to manage.
+  const [previewOpen, setPreviewOpen] = useState(false);
   // The persisted business identity. Lives under its own localStorage key,
   // is never touched by "Clear invoice", and only the overlay writes it.
-  const [profile, setProfile] = useState<CompanyProfile>(emptyCompanyProfile);
+  const [profile, setProfile] = useState<CompanyProfile>(defaultCompanyProfile);
   const [profileOpen, setProfileOpen] = useState(false);
   // The top summary bar's "Change" link opens this focused dialog — just the
   // currency / date / number formatting, writing back to the same profile.
@@ -74,8 +80,11 @@ export function InvoiceEditor() {
         /* ignore corrupt data */
       }
     }
-    // …then let the saved Company Profile fill any field still left blank.
-    let activeProfile = emptyCompanyProfile;
+    // …then let the saved Company Profile fill any field still left blank. A
+    // first-time visitor (no saved profile) starts from `defaultCompanyProfile`
+    // so the numbering section is pre-filled (INV-00001), but nothing is
+    // persisted or consumed until they save a profile or clear the invoice.
+    let activeProfile = defaultCompanyProfile;
     const savedProfile = loadCompanyProfile();
     if (savedProfile) {
       activeProfile = savedProfile;
@@ -84,7 +93,9 @@ export function InvoiceEditor() {
     // A genuinely fresh start (no invoice in storage) gets the next
     // auto-generated number when numbering is configured; the counter is then
     // advanced and persisted. A restored in-progress invoice keeps its number.
-    if (!hadStoredInvoice && hasInvoiceNumbering(activeProfile)) {
+    // Gated on a *saved* profile: the out-of-the-box defaults drive the dialog
+    // preview but must not silently burn a number on first page load.
+    if (!hadStoredInvoice && savedProfile && hasInvoiceNumbering(activeProfile)) {
       const { number, profile: advanced } = generateNextInvoiceNumber(activeProfile);
       base = { ...base, invoiceNo: number };
       activeProfile = advanced;
@@ -137,6 +148,25 @@ export function InvoiceEditor() {
   // value (React DevTools, or the default above) to swap templates live.
   const template = getInvoiceTemplate(inv.selectedTemplate);
   const Layout = template.Layout;
+
+  // Everything a template layout needs, built once so the editing view and the
+  // preview modal render from the exact same data and formatters — only the
+  // `preview` flag differs. In preview the edit handlers are never invoked
+  // (the document hides every editing control), so they are passed as-is.
+  const layoutProps: Omit<InvoiceTemplateProps, "preview"> = {
+    inv,
+    totals,
+    patch,
+    setItem,
+    addItem,
+    removeItem,
+    onEditProfile: () => setProfileOpen(true),
+    formatMoney: fmtMoney,
+    formatDate: fmtDate,
+    logoUrl: profile.logo,
+    signatureUrl: profile.signatureUrl,
+    banking,
+  };
 
   // Overlay "Save": persist the profile, keep it in state, and let it fill
   // any field the current invoice has left blank (never overwrites typed-in
@@ -199,21 +229,7 @@ export function InvoiceEditor() {
         </div>
       </div>
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 lg:flex-row lg:px-6">
-        <Layout
-          inv={inv}
-          totals={totals}
-          patch={patch}
-          setItem={setItem}
-          addItem={addItem}
-          removeItem={removeItem}
-          onEditProfile={() => setProfileOpen(true)}
-          formatMoney={fmtMoney}
-          formatDate={fmtDate}
-          logoUrl={profile.logo}
-          signatureUrl={profile.signatureUrl}
-          banking={banking}
-          preview={preview}
-        />
+        <Layout {...layoutProps} preview={false} />
 
         <aside className="w-full shrink-0 space-y-4 lg:sticky lg:top-6 lg:w-60 lg:self-start print:hidden">
           <Button size="lg" className="w-full" onClick={handleDownload} disabled={downloading}>
@@ -229,27 +245,12 @@ export function InvoiceEditor() {
           </Button>
           <Button
             size="lg"
-            variant={preview ? "secondary" : "outline"}
+            variant="outline"
             className="w-full"
-            onClick={() => setPreview((p) => !p)}
-            aria-pressed={preview}
+            onClick={() => setPreviewOpen(true)}
           >
-            {preview ? (
-              <>
-                <Pencil /> Back to editing
-              </>
-            ) : (
-              <>
-                <Eye /> Preview
-              </>
-            )}
+            <Eye /> Preview
           </Button>
-          {preview && (
-            <p className="text-xs leading-5 text-muted-foreground">
-              Read-only preview — this is how your PDF will look. Switch back to editing to make
-              changes.
-            </p>
-          )}
           {downloadError && (
             <p className="text-xs leading-5 text-destructive" role="alert">
               {downloadError}
@@ -306,6 +307,10 @@ export function InvoiceEditor() {
         profile={profile}
         onSave={handleProfileSave}
       />
+
+      <InvoicePreviewDialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <Layout {...layoutProps} preview />
+      </InvoicePreviewDialog>
     </>
   );
 }
