@@ -237,7 +237,9 @@ export function applyCompanyProfile(inv: Invoice, p: CompanyProfile): Invoice {
   // Currency is profile-owned (no per-invoice picker), so it is always synced.
   if (p.currencyCode) next.currency = p.currencyCode;
   if (!next.business.trim() && p.businessName.trim()) next.business = p.businessName;
-  if (!next.logo && p.logo) next.logo = p.logo;
+  // The logo is no longer copied onto the invoice — it is read straight from
+  // the profile (`profile.logo`) by the document and the PDF, like the
+  // signature. `Invoice.logo` is kept only for back-compat with stored data.
   if (!next.address.trim() && p.address.trim()) next.address = p.address;
   if (!next.fromPhone.trim() && p.phone.trim()) next.fromPhone = p.phone;
   if (!next.from.trim()) {

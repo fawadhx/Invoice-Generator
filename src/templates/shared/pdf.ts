@@ -22,6 +22,7 @@ export async function renderInvoicePdf(
     margin: MARGIN,
     money,
     date,
+    logoUrl,
     signatureUrl,
     banking,
     imageAsPng,
@@ -38,8 +39,8 @@ export async function renderInvoicePdf(
 
   // ---- Header: logo + business name (left) ----
   let leftY = MARGIN;
-  if (inv.logo) {
-    const logo = await imageAsPng(inv.logo);
+  if (logoUrl) {
+    const logo = await imageAsPng(logoUrl);
     if (logo) {
       const ratio = Math.min(150 / logo.width, 64 / logo.height, 1);
       const w = logo.width * ratio;

@@ -1,5 +1,5 @@
-import { useRef, type ReactNode } from "react";
-import { Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { type ReactNode } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { bankingFieldRows, hasBankingDetails } from "@/lib/company-profile";
@@ -10,6 +10,10 @@ import type { InvoiceTemplateProps, UiTheme } from "../types";
 // appended per field where needed.
 const cell = "editable-field";
 
+// Plain read-only text in preview mode — keeps the same horizontal padding as
+// an `editable-field` so columns still line up with the editable view.
+const previewText = "block whitespace-pre-line break-words px-2 py-1.5 text-sm text-foreground";
+
 type Props = InvoiceTemplateProps & { theme: UiTheme };
 
 /**
@@ -18,6 +22,12 @@ type Props = InvoiceTemplateProps & { theme: UiTheme };
  * affordance on each — is identical across templates; the `theme` prop is
  * the only thing that varies the look. Add a field here once and every
  * template gets it.
+ *
+ * `preview` flips the whole surface into a read-only representation that
+ * matches the exported PDF: no input chrome, no editing-only controls, and
+ * blank fields omitted rather than shown as placeholders. It is purely a
+ * view-state toggle — the invoice data is untouched — so switching back to
+ * editing loses nothing.
  */
 export function InvoiceDocument({
   inv,
@@ -26,58 +36,56 @@ export function InvoiceDocument({
   setItem,
   addItem,
   removeItem,
-  onLogo,
   onEditProfile,
   formatMoney: money,
+  formatDate: fmtDate,
+  logoUrl,
   signatureUrl,
   banking,
+  preview,
   theme: t,
 }: Props) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const { subtotal, tax, total, balance } = totals;
+  const { subtotal, tax, discount, total, amountPaid, balance } = totals;
   const bankRows = bankingFieldRows(banking);
   const showBanking = hasBankingDetails(banking);
   const showBankBox = bankRows.length > 0 || banking.bankingNote.trim() !== "";
+  const taxPct = Number.isFinite(inv.taxPercent) ? inv.taxPercent : 0;
+
+  // In preview mode a blank starter line (no description, nothing billed) is
+  // dropped entirely — matching the PDF, which never prints an empty row.
+  const items =
+    preview
+      ? inv.items.filter((i) => i.name.trim() !== "" || i.qty * i.rate !== 0)
+      : inv.items;
 
   return (
     <article id="invoice-sheet" className={t.sheet}>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => onLogo(e.target.files?.[0])}
-          />
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="mb-4 flex h-20 w-40 items-center justify-center gap-2 rounded-sm border border-dashed border-border text-xs text-muted-foreground hover:border-primary hover:text-primary print:hidden"
-          >
-            {inv.logo ? (
-              <img
-                src={inv.logo}
-                alt="Business logo"
-                className="h-full w-full object-contain p-1"
-              />
-            ) : (
-              <>
-                <Upload className="h-4 w-4" /> Add your logo
-              </>
-            )}
-          </button>
-          {inv.logo && (
+          {/*
+           * Logo — display only. It comes from the saved Company Profile;
+           * uploading / changing it lives in the "Edit business details"
+           * overlay. When none is saved a muted placeholder stands in (the
+           * same way the business-name / address prompts do), and it is
+           * hidden entirely in preview and print.
+           */}
+          {logoUrl ? (
             <img
-              src={inv.logo}
+              src={logoUrl}
               alt="Business logo"
-              className="mb-4 hidden h-20 object-contain object-left print:block"
+              className="mb-4 h-20 w-auto max-w-[220px] object-contain object-left"
             />
+          ) : preview ? null : (
+            <div className="mb-4 flex h-20 w-40 items-center justify-center rounded-sm border border-dashed border-border px-3 text-center text-[11px] italic leading-tight text-muted-foreground/60 print:hidden">
+              Add a logo from “Edit business details”
+            </div>
           )}
           {/*
            * Business name and address are read-only here — they are edited
            * only through the Company Details overlay (the pencil button). The
            * text keeps the same position and typography the old inline inputs
-           * had; when nothing is saved yet a muted prompt stands in.
+           * had; when nothing is saved yet a muted prompt stands in (except in
+           * preview, where a blank field simply renders nothing).
            */}
           <div className="flex items-start gap-3">
             <div className="min-w-0">
@@ -90,7 +98,7 @@ export function InvoiceDocument({
                 >
                   {inv.business}
                 </p>
-              ) : (
+              ) : preview ? null : (
                 <p
                   className={cn(
                     "text-lg font-semibold italic text-muted-foreground/60 print:hidden",
@@ -104,116 +112,159 @@ export function InvoiceDocument({
                 <p className="mt-2 whitespace-pre-line break-words text-sm text-muted-foreground">
                   {inv.address}
                 </p>
-              ) : (
+              ) : preview ? null : (
                 <p className="mt-2 text-sm italic text-muted-foreground/60 print:hidden">
                   Add your business address from the edit button →
                 </p>
               )}
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={onEditProfile}
-              aria-label="Edit business details"
-              title="Edit business details"
-              className="shrink-0 print:hidden"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+            {!preview && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={onEditProfile}
+                aria-label="Edit business details"
+                title="Edit business details"
+                className="shrink-0 print:hidden"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
         <div className="w-full sm:w-64">
           <div className={t.invoiceTitleWrap}>
             <span className={t.invoiceTitleText}>INVOICE</span>
           </div>
-          <div className="flex items-center justify-center gap-1 sm:justify-end">
-            <span className="text-xs font-medium text-muted-foreground">#</span>
-            <input
-              style={{ fieldSizing: "content" }}
-              className={`${cell} w-auto min-w-8 text-right`}
-              value={inv.invoiceNo}
-              onChange={(e) => patch({ invoiceNo: e.target.value })}
-            />
-          </div>
+          {(!preview || inv.invoiceNo.trim()) && (
+            <div className="flex items-center justify-center gap-1 sm:justify-end">
+              <span className="text-xs font-medium text-muted-foreground">#</span>
+              {preview ? (
+                <span className="text-right text-sm text-foreground">{inv.invoiceNo}</span>
+              ) : (
+                <input
+                  style={{ fieldSizing: "content" }}
+                  className={`${cell} w-auto min-w-8 text-right`}
+                  value={inv.invoiceNo}
+                  onChange={(e) => patch({ invoiceNo: e.target.value })}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       <div className={cn(t.partiesTop, "grid gap-6 sm:grid-cols-2")}>
         <div className="space-y-4">
-          <Block label="Bill from" labelClassName={t.label}>
-            <textarea
-              className={`${cell} min-h-16 resize-none`}
-              placeholder="Name, address, email"
-              value={inv.from}
-              onChange={(e) => patch({ from: e.target.value })}
-            />
-            <input
-              type="tel"
-              aria-label="Your phone number"
-              className={`${cell} mt-2`}
-              placeholder="Phone number"
-              value={inv.fromPhone}
-              onChange={(e) => patch({ fromPhone: e.target.value })}
-            />
-          </Block>
-          <Block label="Bill to" labelClassName={t.label}>
-            <textarea
-              className={`${cell} min-h-16 resize-none`}
-              placeholder="Who is this invoice to?"
-              value={inv.to}
-              onChange={(e) => patch({ to: e.target.value })}
-            />
-            <input
-              type="tel"
-              aria-label="Client phone number"
-              className={`${cell} mt-2`}
-              placeholder="Phone number"
-              value={inv.toPhone}
-              onChange={(e) => patch({ toPhone: e.target.value })}
-            />
-          </Block>
-          <Block label="Ship to" labelClassName={t.label}>
-            <textarea
-              className={`${cell} min-h-12 resize-none`}
-              placeholder="(optional)"
-              value={inv.shipTo}
-              onChange={(e) => patch({ shipTo: e.target.value })}
-            />
-          </Block>
+          {(!preview || inv.from.trim() || inv.fromPhone.trim()) && (
+            <Block label="Bill from" labelClassName={t.label}>
+              <AreaField
+                preview={preview}
+                className="min-h-16"
+                placeholder="Name, address, email"
+                value={inv.from}
+                onChange={(v) => patch({ from: v })}
+              />
+              {(!preview || inv.fromPhone.trim()) && (
+                <Field
+                  preview={preview}
+                  type="tel"
+                  ariaLabel="Your phone number"
+                  className="mt-2"
+                  placeholder="Phone number"
+                  value={inv.fromPhone}
+                  onChange={(v) => patch({ fromPhone: v })}
+                />
+              )}
+            </Block>
+          )}
+          {(!preview || inv.to.trim() || inv.toPhone.trim()) && (
+            <Block label="Bill to" labelClassName={t.label}>
+              <AreaField
+                preview={preview}
+                className="min-h-16"
+                placeholder="Who is this invoice to?"
+                value={inv.to}
+                onChange={(v) => patch({ to: v })}
+              />
+              {(!preview || inv.toPhone.trim()) && (
+                <Field
+                  preview={preview}
+                  type="tel"
+                  ariaLabel="Client phone number"
+                  className="mt-2"
+                  placeholder="Phone number"
+                  value={inv.toPhone}
+                  onChange={(v) => patch({ toPhone: v })}
+                />
+              )}
+            </Block>
+          )}
+          {(!preview || inv.shipTo.trim()) && (
+            <Block label="Ship to" labelClassName={t.label}>
+              <AreaField
+                preview={preview}
+                className="min-h-12"
+                placeholder="(optional)"
+                value={inv.shipTo}
+                onChange={(v) => patch({ shipTo: v })}
+              />
+            </Block>
+          )}
         </div>
         <div className="space-y-2 sm:pl-6">
-          <Row label="Date" labelClassName={t.label}>
-            <input
-              type="date"
-              className={`${cell} text-right`}
-              value={inv.date}
-              onChange={(e) => patch({ date: e.target.value })}
-            />
-          </Row>
-          <Row label="Payment terms" labelClassName={t.label}>
-            <input
-              className={`${cell} text-right`}
-              value={inv.terms}
-              onChange={(e) => patch({ terms: e.target.value })}
-            />
-          </Row>
-          <Row label="Due date" labelClassName={t.label}>
-            <input
-              type="date"
-              className={`${cell} text-right`}
-              value={inv.dueDate}
-              onChange={(e) => patch({ dueDate: e.target.value })}
-            />
-          </Row>
+          {(!preview || inv.date) && (
+            <Row label="Date" labelClassName={t.label}>
+              <Field
+                preview={preview}
+                type="date"
+                className="text-right"
+                previewClassName="text-right"
+                value={inv.date}
+                displayValue={fmtDate(inv.date)}
+                onChange={(v) => patch({ date: v })}
+              />
+            </Row>
+          )}
+          {(!preview || inv.terms.trim()) && (
+            <Row label="Payment terms" labelClassName={t.label}>
+              <Field
+                preview={preview}
+                className="text-right"
+                previewClassName="text-right"
+                value={inv.terms}
+                onChange={(v) => patch({ terms: v })}
+              />
+            </Row>
+          )}
+          {(!preview || inv.dueDate) && (
+            <Row label="Due date" labelClassName={t.label}>
+              <Field
+                preview={preview}
+                type="date"
+                className="text-right"
+                previewClassName="text-right"
+                value={inv.dueDate}
+                displayValue={fmtDate(inv.dueDate)}
+                onChange={(v) => patch({ dueDate: v })}
+              />
+            </Row>
+          )}
           <Row label="Balance due" labelClassName={t.label}>
-            <input
-              readOnly
-              tabIndex={-1}
-              aria-label="Balance due (calculated)"
-              className={`${cell} text-right text-sm font-semibold`}
-              value={money(balance)}
-            />
+            {preview ? (
+              <span className="block px-2 py-1.5 text-right text-sm font-semibold text-foreground">
+                {money(balance)}
+              </span>
+            ) : (
+              <input
+                readOnly
+                tabIndex={-1}
+                aria-label="Balance due (calculated)"
+                className={`${cell} text-right text-sm font-semibold`}
+                value={money(balance)}
+              />
+            )}
           </Row>
         </div>
       </div>
@@ -226,6 +277,8 @@ export function InvoiceDocument({
          * remove in a 2x2 grid, each with a small caption so the numbers stay
          * labelled without the header. Every wrapper is `sm:contents`, so at
          * >=sm the inner controls flatten straight back into the 5-col grid.
+         * In preview the inputs become plain text and the remove control and
+         * "Line item" button are gone.
          */}
         <div
           className={cn("hidden grid-cols-[1fr_60px_88px_88px_28px] gap-2 sm:grid", t.tableHead)}
@@ -236,7 +289,7 @@ export function InvoiceDocument({
           <span className="text-right">Amount</span>
           <span />
         </div>
-        {inv.items.map((item) => (
+        {items.map((item) => (
           <div
             key={item.id}
             className={cn(
@@ -248,39 +301,57 @@ export function InvoiceDocument({
               <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
                 Item
               </span>
-              <input
-                className={cell}
-                placeholder="Description of service or item"
-                value={item.name}
-                onChange={(e) => setItem(item.id, "name", e.target.value)}
-              />
+              {preview ? (
+                <span className="block px-2 py-1.5 text-sm text-foreground sm:py-0">
+                  {item.name}
+                </span>
+              ) : (
+                <input
+                  className={cell}
+                  placeholder="Description of service or item"
+                  value={item.name}
+                  onChange={(e) => setItem(item.id, "name", e.target.value)}
+                />
+              )}
             </label>
             <div className="grid grid-cols-2 gap-2 sm:contents">
               <label className="sm:contents">
                 <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
                   Qty
                 </span>
-                <input
-                  type="number"
-                  min={0}
-                  aria-label="Quantity"
-                  className={`${cell} text-right`}
-                  value={item.qty}
-                  onChange={(e) => setItem(item.id, "qty", e.target.value)}
-                />
+                {preview ? (
+                  <span className="block px-2 py-1.5 text-left text-sm text-foreground sm:py-0 sm:text-right">
+                    {item.qty}
+                  </span>
+                ) : (
+                  <input
+                    type="number"
+                    min={0}
+                    aria-label="Quantity"
+                    className={`${cell} text-right`}
+                    value={item.qty}
+                    onChange={(e) => setItem(item.id, "qty", e.target.value)}
+                  />
+                )}
               </label>
               <label className="sm:contents">
                 <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
                   Rate
                 </span>
-                <input
-                  type="number"
-                  min={0}
-                  aria-label="Rate"
-                  className={`${cell} text-right`}
-                  value={item.rate}
-                  onChange={(e) => setItem(item.id, "rate", e.target.value)}
-                />
+                {preview ? (
+                  <span className="block px-2 py-1.5 text-left text-sm text-foreground sm:py-0 sm:text-right">
+                    {money(item.rate)}
+                  </span>
+                ) : (
+                  <input
+                    type="number"
+                    min={0}
+                    aria-label="Rate"
+                    className={`${cell} text-right`}
+                    value={item.rate}
+                    onChange={(e) => setItem(item.id, "rate", e.target.value)}
+                  />
+                )}
               </label>
               <div className="sm:contents">
                 <span className="mb-1 block text-[11px] font-medium text-muted-foreground sm:hidden">
@@ -290,67 +361,86 @@ export function InvoiceDocument({
                   {money(item.qty * item.rate)}
                 </span>
               </div>
-              <div className="flex items-center justify-end sm:contents">
-                <button
-                  aria-label="Remove line"
-                  onClick={() => removeItem(item.id)}
-                  className="text-muted-foreground hover:text-destructive print:hidden"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+              {!preview && (
+                <div className="flex items-center justify-end sm:contents">
+                  <button
+                    aria-label="Remove line"
+                    onClick={() => removeItem(item.id)}
+                    className="text-muted-foreground hover:text-destructive print:hidden"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
-        <Button variant="outline" size="sm" className="mt-3 print:hidden" onClick={addItem}>
-          <Plus /> Line item
-        </Button>
+        {!preview && (
+          <Button variant="outline" size="sm" className="mt-3 print:hidden" onClick={addItem}>
+            <Plus /> Line item
+          </Button>
+        )}
       </div>
 
       <div className={cn(t.summaryTop, "grid gap-8 sm:grid-cols-2")}>
-        <Block label="Notes" labelClassName={t.label}>
-          <textarea
-            className={`${cell} min-h-20 resize-none`}
-            placeholder="Notes or terms — e.g. bank details, late fees"
-            value={inv.notes}
-            onChange={(e) => patch({ notes: e.target.value })}
-          />
-        </Block>
+        {!preview || inv.notes.trim() ? (
+          <Block label="Notes" labelClassName={t.label}>
+            <AreaField
+              preview={preview}
+              className="min-h-20"
+              placeholder="Notes or terms — e.g. bank details, late fees"
+              value={inv.notes}
+              onChange={(v) => patch({ notes: v })}
+            />
+          </Block>
+        ) : (
+          <div aria-hidden />
+        )}
         <div className="space-y-2 text-sm">
           <Row label="Subtotal" labelClassName={t.label}>
             <span className="block px-2 py-1.5 text-right">{money(subtotal)}</span>
           </Row>
-          <Row label="Tax (%)" labelClassName={t.label}>
-            <input
-              type="number"
-              min={0}
-              className={`${cell} text-right`}
-              value={inv.taxPercent}
-              onChange={(e) => patch({ taxPercent: Number(e.target.value) })}
-            />
+          <Row label={preview ? `Tax (${taxPct}%)` : "Tax (%)"} labelClassName={t.label}>
+            {preview ? (
+              <span className="block px-2 py-1.5 text-right">{money(tax)}</span>
+            ) : (
+              <input
+                type="number"
+                min={0}
+                className={`${cell} text-right`}
+                value={inv.taxPercent}
+                onChange={(e) => patch({ taxPercent: Number(e.target.value) })}
+              />
+            )}
           </Row>
           <Row label="Discount" labelClassName={t.label}>
-            <input
-              type="number"
-              min={0}
-              className={`${cell} text-right`}
-              value={inv.discount}
-              onChange={(e) => patch({ discount: Number(e.target.value) })}
-            />
+            {preview ? (
+              <span className="block px-2 py-1.5 text-right">- {money(discount)}</span>
+            ) : (
+              <input
+                type="number"
+                min={0}
+                className={`${cell} text-right`}
+                value={inv.discount}
+                onChange={(e) => patch({ discount: Number(e.target.value) })}
+              />
+            )}
           </Row>
           <Row label="Total" labelClassName={t.label}>
-            <span className="block px-2 py-1.5 text-right font-semibold">
-              {money(total)}
-            </span>
+            <span className="block px-2 py-1.5 text-right font-semibold">{money(total)}</span>
           </Row>
           <Row label="Amount paid" labelClassName={t.label}>
-            <input
-              type="number"
-              min={0}
-              className={`${cell} text-right`}
-              value={inv.amountPaid}
-              onChange={(e) => patch({ amountPaid: Number(e.target.value) })}
-            />
+            {preview ? (
+              <span className="block px-2 py-1.5 text-right">- {money(amountPaid)}</span>
+            ) : (
+              <input
+                type="number"
+                min={0}
+                className={`${cell} text-right`}
+                value={inv.amountPaid}
+                onChange={(e) => patch({ amountPaid: Number(e.target.value) })}
+              />
+            )}
           </Row>
           <div className={t.totalsDivider}>
             <Row label="Balance due" labelClassName={t.label}>
@@ -445,5 +535,78 @@ function Block({
       <p className={cn("mb-1", labelClassName)}>{label}</p>
       {children}
     </div>
+  );
+}
+
+/**
+ * A single-line editable field that collapses to plain text in preview mode.
+ * Returns `null` in preview when there is nothing to show, so callers gate the
+ * surrounding label/row on the same emptiness check.
+ */
+function Field({
+  preview,
+  value,
+  onChange,
+  className,
+  previewClassName,
+  type = "text",
+  placeholder,
+  ariaLabel,
+  displayValue,
+}: {
+  preview: boolean;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  previewClassName?: string;
+  type?: string;
+  placeholder?: string;
+  ariaLabel?: string;
+  /** Text to show in preview instead of the raw value (e.g. a formatted date). */
+  displayValue?: string;
+}) {
+  if (preview) {
+    const shown = (displayValue ?? value ?? "").trim();
+    if (!shown) return null;
+    return <span className={cn(previewText, previewClassName)}>{shown}</span>;
+  }
+  return (
+    <input
+      type={type}
+      aria-label={ariaLabel}
+      placeholder={placeholder}
+      className={cn(cell, className)}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
+/** Multi-line variant of {@link Field}. */
+function AreaField({
+  preview,
+  value,
+  onChange,
+  className,
+  placeholder,
+}: {
+  preview: boolean;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  placeholder?: string;
+}) {
+  if (preview) {
+    const v = value.trim();
+    if (!v) return null;
+    return <p className={previewText}>{v}</p>;
+  }
+  return (
+    <textarea
+      className={cn(cell, "resize-none", className)}
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }

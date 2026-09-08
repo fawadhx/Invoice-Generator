@@ -1,6 +1,11 @@
 export type InvoiceItem = { id: number; name: string; qty: number; rate: number };
 
 export type Invoice = {
+  /**
+   * @deprecated The logo now comes from the saved Company Profile
+   * (`profile.logo`), read directly by the document and the PDF. This field is
+   * retained only so older invoices persisted in localStorage still parse.
+   */
   logo?: string;
   business: string;
   /**

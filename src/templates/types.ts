@@ -25,8 +25,21 @@ export type InvoiceTemplateProps = {
   addItem: () => void;
   /** Remove the line item with this id. */
   removeItem: (id: number) => void;
-  /** Handle a newly picked logo file. */
-  onLogo: (file?: File) => void;
+  /**
+   * The saved Company Profile's logo as a data URL, or `""` when none has been
+   * set. Shown read-only in the header (in the spot the old inline upload box
+   * used to sit); a muted placeholder stands in when it is empty. Uploading a
+   * logo lives only in the Company Details overlay — the document never uploads.
+   */
+  logoUrl: string;
+  /**
+   * When true, the document renders as a clean read-only preview that matches
+   * the exported PDF: input borders / hover / focus affordances are gone,
+   * every editing-only control (edit pencil, add / remove line item) is
+   * hidden, and blank fields are omitted entirely rather than showing a
+   * placeholder. Purely a view-state toggle — no data changes.
+   */
+  preview: boolean;
   /**
    * Formats a money amount using the saved Company Profile's currency display
    * + number format (e.g. `Rs. 52,889.50`). Same function drives the PDF, so
@@ -86,6 +99,11 @@ export type InvoicePdfContext = {
   money: (value: number) => string;
   /** Formats an ISO date (`YYYY-MM-DD`) with the saved profile's date format. */
   date: (iso: string) => string;
+  /**
+   * The saved Company Profile's logo as a data URL, or `""` when none has been
+   * set. Drawn top-left of the header only when non-empty.
+   */
+  logoUrl: string;
   /**
    * The saved Company Profile's signature as a data URL, or `""` when none
    * has been set. Drawn near the foot of the invoice (image + business name +

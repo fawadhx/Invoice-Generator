@@ -80,6 +80,9 @@ async function imageAsPng(
  * `banking` is the saved Company Profile's Payable To / banking fields, drawn
  * as a footer at the very bottom of the invoice; an all-blank value (the
  * default) renders nothing.
+ *
+ * `logoUrl` is the saved Company Profile's logo (a data URL), or `""` for
+ * none — drawn top-left of the header, matching the on-screen document.
  */
 export async function generateInvoicePdf(
   inv: Invoice,
@@ -87,6 +90,7 @@ export async function generateInvoicePdf(
   prefs: FormatPrefs = DEFAULT_FORMAT_PREFS,
   signatureUrl = "",
   banking: BankingDetails = EMPTY_BANKING,
+  logoUrl = "",
 ): Promise<void> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const template = getInvoiceTemplate(inv.selectedTemplate);
@@ -101,6 +105,7 @@ export async function generateInvoicePdf(
     margin: MARGIN,
     money: (value: number) => formatMoney(value, prefs),
     date: (iso: string) => formatDate(iso, prefs.dateFormat),
+    logoUrl,
     signatureUrl,
     banking,
     imageAsPng,

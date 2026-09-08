@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Eye, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { computeTotals, type Invoice, type InvoiceItem as Item } from "@/lib/invoice";
@@ -49,6 +49,10 @@ export function InvoiceEditor() {
   const [inv, setInv] = useState<Invoice>(initial);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  // A pure view-state toggle: when true the invoice document renders as a
+  // read-only, chrome-free preview that matches the exported PDF. No invoice
+  // data changes, so toggling back to editing loses nothing.
+  const [preview, setPreview] = useState(false);
   // The persisted business identity. Lives under its own localStorage key,
   // is never touched by "Clear invoice", and only the overlay writes it.
   const [profile, setProfile] = useState<CompanyProfile>(emptyCompanyProfile);
@@ -110,12 +114,6 @@ export function InvoiceEditor() {
   const addItem = () =>
     patch({ items: [...inv.items, { id: Date.now(), name: "", qty: 1, rate: 0 }] });
   const removeItem = (id: number) => patch({ items: inv.items.filter((i) => i.id !== id) });
-  const onLogo = (file?: File) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => patch({ logo: String(reader.result) });
-    reader.readAsDataURL(file);
-  };
 
   // Balance due is always derived — Total − Amount paid — and is never stored
   // as its own editable value. Recomputed whenever any line item, tax,
@@ -175,7 +173,7 @@ export function InvoiceEditor() {
     setDownloading(true);
     try {
       const { generateInvoicePdf } = await import("@/lib/invoice-pdf");
-      await generateInvoicePdf(inv, totals, prefs, profile.signatureUrl, banking);
+      await generateInvoicePdf(inv, totals, prefs, profile.signatureUrl, banking, profile.logo);
     } catch (err) {
       console.error("Invoice PDF generation failed", err);
       setDownloadError("Could not generate the PDF. Please try again.");
@@ -208,12 +206,13 @@ export function InvoiceEditor() {
           setItem={setItem}
           addItem={addItem}
           removeItem={removeItem}
-          onLogo={onLogo}
           onEditProfile={() => setProfileOpen(true)}
           formatMoney={fmtMoney}
           formatDate={fmtDate}
+          logoUrl={profile.logo}
           signatureUrl={profile.signatureUrl}
           banking={banking}
+          preview={preview}
         />
 
         <aside className="w-full shrink-0 space-y-4 lg:sticky lg:top-6 lg:w-60 lg:self-start print:hidden">
@@ -228,6 +227,29 @@ export function InvoiceEditor() {
               </>
             )}
           </Button>
+          <Button
+            size="lg"
+            variant={preview ? "secondary" : "outline"}
+            className="w-full"
+            onClick={() => setPreview((p) => !p)}
+            aria-pressed={preview}
+          >
+            {preview ? (
+              <>
+                <Pencil /> Back to editing
+              </>
+            ) : (
+              <>
+                <Eye /> Preview
+              </>
+            )}
+          </Button>
+          {preview && (
+            <p className="text-xs leading-5 text-muted-foreground">
+              Read-only preview — this is how your PDF will look. Switch back to editing to make
+              changes.
+            </p>
+          )}
           {downloadError && (
             <p className="text-xs leading-5 text-destructive" role="alert">
               {downloadError}
