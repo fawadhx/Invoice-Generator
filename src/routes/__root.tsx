@@ -171,14 +171,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
-        src: "https://www.googletagmanager.com/gtag/js?id=G-WN244D973E",
+        src: "https://www.googletagmanager.com/gtag/js?id=G-SDS35WV7TH",
         async: true,
       },
       {
         children: `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', 'G-WN244D973E');`,
+gtag('config', 'G-SDS35WV7TH');`,
       },
     ],
   }),
